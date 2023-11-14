@@ -12,7 +12,9 @@ import requests
 from django.conf import settings
 from . import models
 
+import logging
 
+logger = logging.getLogger(__name__)
 
 
 
@@ -75,6 +77,7 @@ def get_WxUser_from_wechat(code):
     code2Session= "https://api.weixin.qq.com/sns/jscode2session?appid={}&secret={}&js_code={}&grant_type=authorization_code"
     response = requests.get(code2Session.format(settings.APPID, settings.APPSECRET, code))
     data = response.json()
+    logger.debug("wx api: " + str(data))
     if data.get("openid"):
         return data
     else:

@@ -103,4 +103,10 @@ Control.ca-list
 Control.ca-bundle
 Control.system-ca-bundle
 GitHub.sublime-settings
- 
+
+# docker related 
+docker-compose.yml
+requirements.txt 
+Dockerfile 
+nginx
+settings_prod.py 

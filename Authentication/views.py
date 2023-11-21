@@ -75,6 +75,10 @@ def wechat_login(request):
     return Response({'error': 'Invalid code'}, status=400)
 
 def get_WxUser_from_wechat(code):
+    if settings.DEBUG:
+        if code.startswith('test'):
+        # 本地测试时，直接返回测试用的 openid
+            return {'openid': code}
     code2Session= "https://api.weixin.qq.com/sns/jscode2session?appid={}&secret={}&js_code={}&grant_type=authorization_code"
     response = requests.get(code2Session.format(settings.APPID, settings.APPSECRET, code))
     data = response.json()

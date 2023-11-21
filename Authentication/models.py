@@ -28,8 +28,24 @@ class CustomUserManager(BaseUserManager):
 class User(AbstractBaseUser, PermissionsMixin):
     openID = models.CharField(max_length=80, unique=True)
     session_key = models.CharField(max_length=80, unique=True, null=True)
-    username = models.CharField(max_length=80, unique=True, null=True, blank=True)
     create_time = models.IntegerField(default=int(timezone.now().timestamp()))
+
+    GENDER_CHOICES = (
+        ('male', 'Male'),
+        ('female', 'Female'),
+        ('other', 'Other'),
+        ('secret', 'Prefer not to say'),
+    )
+
+    username = models.CharField(max_length=80, unique=True, null=True, blank=True)
+    gender = models.CharField(
+        max_length=10,
+        choices=GENDER_CHOICES,
+        default='secret'
+    )
+    avatar_url = models.CharField(max_length=200, null=True, blank=True)
+    self_intro = models.CharField(max_length=256, null=True, blank=True)
+    age = models.IntegerField(default=0)
 
 
     is_active = models.BooleanField(default=True)

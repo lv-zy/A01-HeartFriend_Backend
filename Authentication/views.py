@@ -65,6 +65,7 @@ def wechat_login(request):
             refresh = RefreshToken.for_user(user)
             return Response({
                 'access': str(refresh.access_token),
+                'created': not created
             }, status=200)
     except Exception as e:
         return Response({'error': str(e)}, status=500)
@@ -83,6 +84,20 @@ def get_WxUser_from_wechat(code):
 
 
 
+# views.py
+from rest_framework import generics, permissions
+from django.contrib.auth import get_user_model
+from .serializers import UserSerializer
+
+User = get_user_model()
+
+class UserInfoAPIView(generics.RetrieveUpdateAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        # 返回当前认证用户的实例
+        return self.request.user
 
 
 
@@ -91,7 +106,6 @@ def get_WxUser_from_wechat(code):
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def test_view(request):
-
     return Response('OK')
 
 

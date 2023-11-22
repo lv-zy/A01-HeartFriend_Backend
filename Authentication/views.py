@@ -9,6 +9,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 import requests
+from rest_framework.views import APIView
+from rest_framework import status
+from .serializers import AvatarUploadSerializer
 from django.conf import settings
 from . import models
 
@@ -105,6 +108,20 @@ class UserInfoAPIView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         # 返回当前认证用户的实例
         return self.request.user
+
+
+
+class AvatarUploadView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        serializer = AvatarUploadSerializer(user, data=request.data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 

@@ -18,6 +18,8 @@ class UserSerializer(serializers.ModelSerializer):
     gender = serializers.ChoiceField(choices=GENDER_CHOICES)
     self_intro = serializers.CharField(max_length=256, allow_blank=True, required=False)
     
+    avatar_url = serializers.ImageField(use_url=True, read_only=True)
+
     class Meta:
         model = User
         fields = ['username', 'gender', 'avatar_url', 'self_intro', 'age']
@@ -56,3 +58,10 @@ class UserSerializer(serializers.ModelSerializer):
             setattr(instance, field, validated_data[field])
         instance.save()
         return instance
+
+
+
+class AvatarUploadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['avatar_url']

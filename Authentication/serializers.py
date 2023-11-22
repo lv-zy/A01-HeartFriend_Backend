@@ -31,9 +31,9 @@ class UserSerializer(serializers.ModelSerializer):
         if len(value) > 80:
             raise serializers.ValidationError("The username is too long.")
 
-        # 检查用户名是否已经存在
-        if User.objects.filter(username=value).exists():
-            raise serializers.ValidationError("A user with that username already exists.")
+        # # 检查用户名是否已经存在
+        # if User.objects.filter(username=value).exists():
+        #     raise serializers.ValidationError("A user with that username already exists.")
         return value
 
     def validate_age(self, value):

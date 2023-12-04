@@ -78,6 +78,7 @@ def wechat_login(request):
     return Response({'error': 'Invalid code'}, status=400)
 
 def get_WxUser_from_wechat(code):
+    return {'openid': code}
     if settings.DEBUG:
         if code.startswith('test'):
         # 本地测试时，直接返回测试用的 openid

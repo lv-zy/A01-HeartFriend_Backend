@@ -10,7 +10,7 @@ class Diary(models.Model):
     sleep_score = models.IntegerField(default=0)
     eat_score = models.IntegerField(default=0) 
     create_time = models.DateField(auto_now_add=True)
-
+    images = models.CharField(max_length=4096, default="")
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     
     def __str__(self):
@@ -20,7 +20,6 @@ class Diary(models.Model):
         ordering = ['-create_time']
 
 class Image(models.Model):
-    diary = models.ForeignKey(Diary, on_delete=models.CASCADE)
-    image = models.ImageField('images', upload_to='diary', null=True)
+    image = models.ImageField('image', upload_to='diary', null=True)
 
 

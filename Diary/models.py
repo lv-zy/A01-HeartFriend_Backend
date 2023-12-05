@@ -2,6 +2,7 @@ from django.db import models
 from Authentication.models import User
 
 
+
 class Diary(models.Model):
     title = models.CharField(max_length=80, unique=True)
     content = models.CharField(max_length=8096)
@@ -17,4 +18,9 @@ class Diary(models.Model):
 
     class Meta: 
         ordering = ['-create_time']
-        
+
+class Image(models.Model):
+    diary = models.ForeignKey(Diary, on_delete=models.CASCADE)
+    image = models.ImageField('images', upload_to='diary', null=True)
+
+

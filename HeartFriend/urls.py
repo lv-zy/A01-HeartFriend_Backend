@@ -22,7 +22,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/user/', include('Authentication.urls')),
     path('api/v1/diary/', include('Diary.urls')), 
-]
-
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    path('api/v1/medicine/', include('Health.urls')), 
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

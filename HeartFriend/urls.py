@@ -17,10 +17,17 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/user/', include('Authentication.urls')),
     path('api/v1/diary/', include('Diary.urls')), 
+    path('api/v1/forum/', include('Forum.urls')), 
     path('api/v1/medicine/', include('Health.urls')), 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+

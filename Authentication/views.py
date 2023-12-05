@@ -11,8 +11,12 @@ from rest_framework.response import Response
 import requests
 from rest_framework.views import APIView
 from rest_framework import status
-from .serializers import AvatarUploadSerializer
+from .serializers import AvatarUploadSerializer, FollowersSerializer, UserQuerySerializer, FollowingSerializer
 from django.conf import settings
+from django.shortcuts import get_object_or_404
+from rest_framework import generics, permissions
+from .serializers import UserSerializer
+
 from . import models
 
 import logging
@@ -78,6 +82,7 @@ def wechat_login(request):
     return Response({'error': 'Invalid code'}, status=400)
 
 def get_WxUser_from_wechat(code):
+    # return {'openid': code}
     if settings.DEBUG:
         if code.startswith('test'):
         # 本地测试时，直接返回测试用的 openid
@@ -94,12 +99,7 @@ def get_WxUser_from_wechat(code):
 
 
 
-# views.py
-from rest_framework import generics, permissions
-from django.contrib.auth import get_user_model
-from .serializers import UserSerializer
 
-User = get_user_model()
 
 class UserInfoAPIView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
@@ -124,13 +124,58 @@ class AvatarUploadView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+# 只读，通过uuid获取用户的个人信息
+class UserDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    def get(self, request):
+        try:
+            uuid = request.query_params.get('uuid')
+            user = User.objects.get(uuid=uuid)
+            serializer = UserQuerySerializer(user)
+            return Response(serializer.data)
+        except User.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+
+
+class FollowUnfollowView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        uuid = request.data.get('uuid')
+        target_user = get_object_or_404(User, uuid=uuid)
+
+        if request.user.is_following(target_user):
+            request.user.unfollow(target_user)
+            return Response({"status": "unfollowed"}, status=status.HTTP_200_OK)
+        else:
+            request.user.follow(target_user)
+            return Response({"status": "followed"}, status=status.HTTP_200_OK)
+
+
+class FollowersListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, format=None):
+        user = request.user
+        serializer = FollowersSerializer(user)
+        return Response(serializer.data)
+    
+class FollowingListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, format=None):
+        user = request.user
+        serializer = FollowingSerializer(user)
+        return Response(serializer.data)
 
 # example how to utilize the auth decorator
 
-@api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
-def test_view(request):
-    return Response('OK')
+# @api_view(['GET', 'POST'])
+# @permission_classes([IsAuthenticated])
+# def test_view(request):
+#     return Response('OK')
 
 
 

@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.utils import timezone
-
+import uuid
 from django.contrib.auth.hashers import make_password
 
 from .utils import random_avatar_path    
@@ -36,12 +36,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
         
     openID = models.CharField(max_length=80, unique=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     session_key = models.CharField(max_length=80, unique=True, null=True)
     create_time = models.IntegerField(default=int(timezone.now().timestamp()))
 
 
 
-    username = models.CharField(max_length=80, unique=True, null=True, blank=True)
+    username = models.CharField(max_length=80, null=True, blank=True)
     gender = models.CharField(
         max_length=10,
         choices=GENDER_CHOICES,
@@ -51,7 +52,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     age = models.IntegerField(default=0)
     avatar_url = models.ImageField(upload_to=random_avatar_path, null=True, blank=True)
 
-
+    following = models.ManyToManyField('self', 
+                                       related_name='followers', 
+                                       symmetrical=False,
+                                       blank=True)
 
 
     is_active = models.BooleanField(default=True)
@@ -61,6 +65,20 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'openID'
 
     objects = CustomUserManager()
+
+
+    def follow(self, other_user):
+        """让当前用户关注另一个用户"""
+        self.following.add(other_user)
+
+    def unfollow(self, other_user):
+        """让当前用户取消关注另一个用户"""
+        self.following.remove(other_user)
+
+    def is_following(self, other_user):
+        """检查当前用户是否已关注指定用户"""
+        return self.following.filter(id=other_user.id).exists()
+    
 
     def __str__(self):
         return self.openID if not self.username else self.username

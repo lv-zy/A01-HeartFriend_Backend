@@ -2,8 +2,10 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
+from django.http import JsonResponse
 from .models import Post, Comment
 from .serializers import PostSerializer, CommentSerializer
+from rest_framework.decorators import action
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -15,6 +17,21 @@ class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+
+    @action(detail=True, methods=['post'])
+    def like(self, request, pk=None):
+        post = self.get_object()
+        if request.user not in post.likes.all():
+            post.likes.add(request.user)
+            return Response({"status": "liked"})
+        else:
+            post.likes.remove(request.user)
+            return Response({"status": "unliked"})
+    
+    def get_serializer_context(self):
+        context = super(PostViewSet, self).get_serializer_context()
+        context.update({"request": self.request})
+        return context
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -84,4 +101,15 @@ class CommentViewSet(viewsets.ModelViewSet):
     def partial_update(self, request, *args, **kwargs):
         # 禁止部分更新评论
         return Response({"detail": "You are not allowed to modify comments"}, status=status.HTTP_403_FORBIDDEN)
+
+# @IsAuthenticated
+# @api_view(['POST'])
+# def like_post(request, post_id):
+#     post = Post.objects.get(id=post_id)
+#     if request.user not in post.likes.all():
+#         post.likes.add(request.user)
+#         return JsonResponse({"status": "liked"})
+#     else:
+#         post.likes.remove(request.user)
+#         return JsonResponse({"status": "unliked"})
 

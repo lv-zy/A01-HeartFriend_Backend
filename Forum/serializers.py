@@ -9,16 +9,27 @@ User = get_user_model()
 class PostSerializer(serializers.ModelSerializer):
     author = serializers.ReadOnlyField(source='author.username')
     likes_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
+    comments_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
-        fields = ['id', 'title', 'content', 'author', 'created_at', 'updated_at', 'likes_count']
-        read_only_fields = ['id', 'author', 'created_at', 'updated_at', 'likes_count']
+        fields = ['id', 'title', 'content', 'author', 'created_at', 'updated_at', 'likes_count', 'is_liked', 'comments_count']
+        read_only_fields = ['id', 'author', 'created_at', 'updated_at', 'likes_count', 'is_liked', 'comments_count']
     
     def get_likes_count(self, obj):
         # 返回点赞的总数
         return obj.likes.count()
     
+    def get_is_liked(self, obj):
+        request = self.context.get("request")
+        if request and hasattr(request, "user"):
+            return obj.likes.filter(id=request.user.id).exists()
+        return False
+
+    def get_comments_count(self, obj):
+        # 返回评论的总数
+        return obj.comments.count()
 
 
 class CommentSerializer(serializers.ModelSerializer):

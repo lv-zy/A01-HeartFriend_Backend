@@ -82,7 +82,7 @@ def wechat_login(request):
     return Response({'error': 'Invalid code'}, status=400)
 
 def get_WxUser_from_wechat(code):
-    return {'openid': code}
+    # return {'openid': code}
     if settings.DEBUG:
         if code.startswith('test'):
         # 本地测试时，直接返回测试用的 openid
@@ -127,8 +127,9 @@ class AvatarUploadView(APIView):
 # 只读，通过uuid获取用户的个人信息
 class UserDetailView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    def get(self, request, uuid):
+    def get(self, request):
         try:
+            uuid = request.query_params.get('uuid')
             user = User.objects.get(uuid=uuid)
             serializer = UserQuerySerializer(user)
             return Response(serializer.data)
@@ -141,7 +142,8 @@ class UserDetailView(APIView):
 class FollowUnfollowView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    def post(self, request, uuid):
+    def post(self, request):
+        uuid = request.data.get('uuid')
         target_user = get_object_or_404(User, uuid=uuid)
 
         if request.user.is_following(target_user):
@@ -170,10 +172,10 @@ class FollowingListView(APIView):
 
 # example how to utilize the auth decorator
 
-@api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
-def test_view(request):
-    return Response('OK')
+# @api_view(['GET', 'POST'])
+# @permission_classes([IsAuthenticated])
+# def test_view(request):
+#     return Response('OK')
 
 
 

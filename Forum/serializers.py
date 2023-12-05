@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Post, Comment
+from .models import Post, Comment, PostImage
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
@@ -25,7 +25,8 @@ class PostSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'content', 'author', 'created_at', 'updated_at', 
                   'likes_count', 'is_liked', 'dislikes_count', 'is_disliked', 'comments_count', 
                   'author_uuid',
-                  'is_following'
+                  'is_following',
+                  'images'
                   ]
         read_only_fields = ['id', 'author', 'created_at', 'updated_at', 
                             'likes_count', 'is_liked', 'comments_count', 'dislikes_count', 'is_disliked', 
@@ -81,3 +82,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 
+class postImageUploadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostImage
+        fields = '__all__'

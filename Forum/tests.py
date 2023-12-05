@@ -313,7 +313,7 @@ class UUIDAPITests(APITestCase):
 class PostFollowingTests(APITestCase):
     def follow(self, user1, user2):
         self.mylogin(user1)
-        self.client.post(reverse('follow-unfollow', kwargs={'uuid': user2.uuid}))
+        self.client.post(reverse('follow-unfollow'), {'uuid': user2.uuid})
         self.client.credentials(HTTP_AUTHORIZATION = '')
 
     def mylogin(self, user):

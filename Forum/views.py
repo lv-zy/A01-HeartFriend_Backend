@@ -4,9 +4,15 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from rest_framework.response import Response
 from django.http import JsonResponse
 from .models import Post, Comment
-from .serializers import PostSerializer, CommentSerializer
+from .serializers import PostSerializer, CommentSerializer, postImageUploadSerializer
+from django.http import JsonResponse
+from django.core.files.storage import default_storage
+from django.conf import settings
 from rest_framework.decorators import action
 from django.contrib.auth import get_user_model
+import os
+from uuid import uuid4
+from rest_framework.views import APIView
 
 User = get_user_model()
 
@@ -114,4 +120,19 @@ class CommentViewSet(viewsets.ModelViewSet):
     def partial_update(self, request, *args, **kwargs):
         # 禁止部分更新评论
         return Response({"detail": "You are not allowed to modify comments"}, status=status.HTTP_403_FORBIDDEN)
+
+
+
+
+
+class ImageUploadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        serializer = postImageUploadSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

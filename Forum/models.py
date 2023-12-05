@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from .utils import random_postpic_path
 
 User = get_user_model()
 
@@ -12,6 +13,9 @@ class Post(models.Model):
     updated_at = models.DateTimeField(default=timezone.now, verbose_name='更新时间')
     likes = models.ManyToManyField(User, related_name='liked_posts', blank=True, verbose_name='点赞用户')
     dislikes = models.ManyToManyField(User, related_name='disliked_posts', blank=True, verbose_name='踩帖用户')
+
+    images = models.CharField(max_length=4096, default="")
+
 
     def __str__(self):
         return self.title
@@ -44,3 +48,6 @@ class Comment(models.Model):
         self.post.updated_at = timezone.now()
         self.post.save()
         super().save(*args, **kwargs)
+
+class PostImage(models.Model):
+    image = models.ImageField('image', upload_to=random_postpic_path, null=True)

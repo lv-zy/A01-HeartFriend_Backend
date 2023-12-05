@@ -26,10 +26,10 @@ class UserDetailTest(APITestCase):
     def test_get_user_by_uuid(self):
         # 获取用户详情的 URL
         self.mylogin(self.user)
-        url = reverse('user-detail', kwargs={'uuid': self.user.uuid})
+        url = reverse('user-detail')
         
         # 发送 GET 请求
-        response = self.client.get(url)
+        response = self.client.get(url, {'uuid': self.user.uuid})
 
         # 校验响应状态码
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -58,7 +58,7 @@ class UserFollowTests(APITestCase):
 
     def follow(self, user1, user2):
         self.mylogin(user1)
-        self.client.post(reverse('follow-unfollow', kwargs={'uuid': user2.uuid}))
+        self.client.post(reverse('follow-unfollow'), {'uuid': user2.uuid})
         self.client.credentials(HTTP_AUTHORIZATION = '')
 
     def setUp(self):
@@ -84,13 +84,13 @@ class UserFollowTests(APITestCase):
         self.assertTrue(self.user1.is_following(self.user2))
 
         # User1 unfollows User2
-        response = self.client.post(reverse('follow-unfollow', kwargs={'uuid': self.user2.uuid}))
+        response = self.client.post(reverse('follow-unfollow'), {'uuid': self.user2.uuid})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(self.user1.is_following(self.user2))
 
         
         invalid_uuid = '12345678-1234-1234-1234-1234567890ab'
-        response = self.client.post(reverse('follow-unfollow', kwargs={'uuid': invalid_uuid}))
+        response = self.client.post(reverse('follow-unfollow'), {'uuid': invalid_uuid})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_self_info(self):

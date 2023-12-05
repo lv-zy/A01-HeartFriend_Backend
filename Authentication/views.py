@@ -11,7 +11,7 @@ from rest_framework.response import Response
 import requests
 from rest_framework.views import APIView
 from rest_framework import status
-from .serializers import AvatarUploadSerializer
+from .serializers import AvatarUploadSerializer, UserQuerySerializer
 from django.conf import settings
 from . import models
 
@@ -124,6 +124,16 @@ class AvatarUploadView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+# 只读，通过uuid获取用户的个人信息
+class UserDetailView(APIView):
+    def get(self, request, uuid):
+        try:
+            user = User.objects.get(uuid=uuid)
+            serializer = UserQuerySerializer(user)
+            return Response(serializer.data)
+        except User.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 # example how to utilize the auth decorator

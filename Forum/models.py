@@ -11,12 +11,16 @@ class Post(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(default=timezone.now, verbose_name='更新时间')
     likes = models.ManyToManyField(User, related_name='liked_posts', blank=True, verbose_name='点赞用户')
+    dislikes = models.ManyToManyField(User, related_name='disliked_posts', blank=True, verbose_name='踩帖用户')
 
     def __str__(self):
         return self.title
 
     def total_likes(self):
         return self.likes.count()
+
+    def total_dislikes(self):
+        return self.dislikes.count()
 
     class Meta:
         verbose_name = '帖子'

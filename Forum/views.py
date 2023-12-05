@@ -23,10 +23,23 @@ class PostViewSet(viewsets.ModelViewSet):
         post = self.get_object()
         if request.user not in post.likes.all():
             post.likes.add(request.user)
+            post.dislikes.remove(request.user)  # 确保用户不能同时点赞和点踩
             return Response({"status": "liked"})
         else:
             post.likes.remove(request.user)
             return Response({"status": "unliked"})
+
+    @action(detail=True, methods=['post'])
+    def dislike(self, request, pk=None):
+        post = self.get_object()
+        if request.user not in post.dislikes.all():
+            post.dislikes.add(request.user)
+            post.likes.remove(request.user)  # 确保用户不能同时点赞和点踩
+            return Response({"status": "disliked"})
+        else:
+            post.dislikes.remove(request.user)
+            return Response({"status": "undisliked"})
+    
     
     def get_serializer_context(self):
         context = super(PostViewSet, self).get_serializer_context()
@@ -101,15 +114,4 @@ class CommentViewSet(viewsets.ModelViewSet):
     def partial_update(self, request, *args, **kwargs):
         # 禁止部分更新评论
         return Response({"detail": "You are not allowed to modify comments"}, status=status.HTTP_403_FORBIDDEN)
-
-# @IsAuthenticated
-# @api_view(['POST'])
-# def like_post(request, post_id):
-#     post = Post.objects.get(id=post_id)
-#     if request.user not in post.likes.all():
-#         post.likes.add(request.user)
-#         return JsonResponse({"status": "liked"})
-#     else:
-#         post.likes.remove(request.user)
-#         return JsonResponse({"status": "unliked"})
 

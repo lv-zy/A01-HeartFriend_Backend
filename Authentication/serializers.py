@@ -65,3 +65,12 @@ class AvatarUploadSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['avatar_url']
+
+
+
+class UserQuerySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('uuid', 'username', 'gender', 'self_intro', 'age', 'avatar_url')
+        read_only_fields = ('uuid', 'username', 'gender', 'self_intro', 'age', 'avatar_url')
+        

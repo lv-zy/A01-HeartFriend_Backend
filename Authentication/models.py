@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.utils import timezone
-
+import uuid
 from django.contrib.auth.hashers import make_password
 
 from .utils import random_avatar_path    
@@ -36,12 +36,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
         
     openID = models.CharField(max_length=80, unique=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     session_key = models.CharField(max_length=80, unique=True, null=True)
     create_time = models.IntegerField(default=int(timezone.now().timestamp()))
 
 
 
-    username = models.CharField(max_length=80, unique=True, null=True, blank=True)
+    username = models.CharField(max_length=80, null=True, blank=True)
     gender = models.CharField(
         max_length=10,
         choices=GENDER_CHOICES,

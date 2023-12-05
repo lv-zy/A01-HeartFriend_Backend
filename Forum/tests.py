@@ -193,3 +193,115 @@ class CommentAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 
+
+
+
+class PostLikeAPITests(APITestCase):
+    def mylogin(self, user):
+
+        self.user_data = {'username': user.username, 'code': user.openID}
+        response = self.client.post('/api/v1/user/login/', self.user_data, format='json')
+        self.token = response.data['access']
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token)
+
+    def getDetailPostUrl(self, pk):
+        return reverse('post-detail', kwargs={'pk': pk})
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', openID = 'testopenid')
+        self.user2 = User.objects.create_user(username='testuser2', openID = 'testopenid2')
+        self.user3 = User.objects.create_user(username='testuser3', openID = 'testopenid3')
+        self.user4 = User.objects.create_user(username='testuser4', openID = 'testopenid4')
+
+        # 创建帖子
+        self.post = Post.objects.create(title='Test Post', content='Test Content', author=self.user)
+        self.post2 = Post.objects.create(title='Test Post2', content='Test Content2', author=self.user2)
+        self.post3 = Post.objects.create(title='Test Post3', content='Test Content3', author=self.user3)
+        self.post4 = Post.objects.create(title='Test Post4', content='Test Content4', author=self.user4)
+
+        # 设置 URL
+        self.create_url = reverse('post-list')
+        self.detail_url = reverse('post-detail', kwargs={'pk': self.post.pk})
+
+    def test_like_post(self):
+        self.mylogin(self.user2)
+        response = self.client.post(reverse('post-like', kwargs={'pk': self.post.pk}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['status'], 'liked')
+        self.assertEqual(self.post.likes.count(), 1)
+        self.assertEqual(self.post.dislikes.count(), 0)
+    
+    def test_dislike_post(self):
+        self.mylogin(self.user2)
+        response = self.client.post(reverse('post-dislike', kwargs={'pk': self.post.pk}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['status'], 'disliked')
+        self.assertEqual(self.post.likes.count(), 0)
+        self.assertEqual(self.post.dislikes.count(), 1)
+
+    def test_like_twice(self):
+        self.mylogin(self.user2)
+        response = self.client.post(reverse('post-like', kwargs={'pk': self.post.pk}))
+        response = self.client.post(reverse('post-like', kwargs={'pk': self.post.pk}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['status'], 'unliked')
+        self.assertEqual(self.post.likes.count(), 0)
+        self.assertEqual(self.post.dislikes.count(), 0)
+    
+    def test_dislike_twice(self):
+        self.mylogin(self.user2)
+        response = self.client.post(reverse('post-dislike', kwargs={'pk': self.post.pk}))
+        response = self.client.post(reverse('post-dislike', kwargs={'pk': self.post.pk}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['status'], 'undisliked')
+        self.assertEqual(self.post.likes.count(), 0)
+        self.assertEqual(self.post.dislikes.count(), 0)
+
+    def test_like_and_dislike(self):
+        self.mylogin(self.user2)
+        response = self.client.post(reverse('post-like', kwargs={'pk': self.post.pk}))
+        response = self.client.post(reverse('post-dislike', kwargs={'pk': self.post.pk}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['status'], 'disliked')
+        self.assertEqual(self.post.likes.count(), 0)
+        self.assertEqual(self.post.dislikes.count(), 1)
+
+        self.assertEqual(response.data['status'], 'disliked')
+        response = self.client.get(reverse('post-detail', kwargs={'pk': self.post.pk}))
+        self.assertEqual(response.data['likes_count'], 0)
+        self.assertEqual(response.data['dislikes_count'], 1)
+
+
+
+class UUIDAPITests(APITestCase):
+    def mylogin(self, user):
+
+        self.user_data = {'username': user.username, 'code': user.openID}
+        response = self.client.post('/api/v1/user/login/', self.user_data, format='json')
+        self.token = response.data['access']
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token)
+
+    def getDetailPostUrl(self, pk):
+        return reverse('post-detail', kwargs={'pk': pk})
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', openID = 'testopenid')
+        self.user2 = User.objects.create_user(username='testuser2', openID = 'testopenid2')
+        self.user3 = User.objects.create_user(username='testuser3', openID = 'testopenid3')
+        self.user4 = User.objects.create_user(username='testuser4', openID = 'testopenid4')
+
+        # 创建帖子
+        self.post = Post.objects.create(title='Test Post', content='Test Content', author=self.user)
+        self.post2 = Post.objects.create(title='Test Post2', content='Test Content2', author=self.user2)
+        self.post3 = Post.objects.create(title='Test Post3', content='Test Content3', author=self.user3)
+        self.post4 = Post.objects.create(title='Test Post4', content='Test Content4', author=self.user4)
+
+        # 设置 URL
+        self.create_url = reverse('post-list')
+        self.detail_url = reverse('post-detail', kwargs={'pk': self.post.pk})
+    
+    def test_get_uuid(self):
+        self.mylogin(self.user)
+        response = self.client.get(self.create_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data[0]['author_uuid'], self.user.uuid)

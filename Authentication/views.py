@@ -11,8 +11,12 @@ from rest_framework.response import Response
 import requests
 from rest_framework.views import APIView
 from rest_framework import status
-from .serializers import AvatarUploadSerializer, UserQuerySerializer
+from .serializers import AvatarUploadSerializer, FollowersSerializer, UserQuerySerializer, FollowingSerializer
 from django.conf import settings
+from django.shortcuts import get_object_or_404
+from rest_framework import generics, permissions
+from .serializers import UserSerializer
+
 from . import models
 
 import logging
@@ -95,12 +99,7 @@ def get_WxUser_from_wechat(code):
 
 
 
-# views.py
-from rest_framework import generics, permissions
-from django.contrib.auth import get_user_model
-from .serializers import UserSerializer
 
-User = get_user_model()
 
 class UserInfoAPIView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
@@ -127,6 +126,7 @@ class AvatarUploadView(APIView):
 
 # 只读，通过uuid获取用户的个人信息
 class UserDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
     def get(self, request, uuid):
         try:
             user = User.objects.get(uuid=uuid)
@@ -135,6 +135,38 @@ class UserDetailView(APIView):
         except User.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
+
+
+
+class FollowUnfollowView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, uuid):
+        target_user = get_object_or_404(User, uuid=uuid)
+
+        if request.user.is_following(target_user):
+            request.user.unfollow(target_user)
+            return Response({"status": "unfollowed"}, status=status.HTTP_200_OK)
+        else:
+            request.user.follow(target_user)
+            return Response({"status": "followed"}, status=status.HTTP_200_OK)
+
+
+class FollowersListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, format=None):
+        user = request.user
+        serializer = FollowersSerializer(user)
+        return Response(serializer.data)
+    
+class FollowingListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, format=None):
+        user = request.user
+        serializer = FollowingSerializer(user)
+        return Response(serializer.data)
 
 # example how to utilize the auth decorator
 

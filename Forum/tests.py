@@ -47,6 +47,7 @@ class PostAPITests(APITestCase):
 
     # 测试获取帖子列表
     def test_get_posts(self):
+        self.mylogin(self.user)
         response = self.client.get(self.create_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 4)
@@ -181,6 +182,7 @@ class CommentAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_get_single_comment(self):
+        self.mylogin(self.user)
         response = self.client.get(reverse('comment-detail', kwargs={'pk': self.comment.pk}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['id'], self.comment.pk)
@@ -305,3 +307,55 @@ class UUIDAPITests(APITestCase):
         response = self.client.get(self.create_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data[0]['author_uuid'], self.user.uuid)
+
+
+
+class PostFollowingTests(APITestCase):
+    def follow(self, user1, user2):
+        self.mylogin(user1)
+        self.client.post(reverse('follow-unfollow', kwargs={'uuid': user2.uuid}))
+        self.client.credentials(HTTP_AUTHORIZATION = '')
+
+    def mylogin(self, user):
+
+        self.user_data = {'username': user.username, 'code': user.openID}
+        response = self.client.post('/api/v1/user/login/', self.user_data, format='json')
+        self.token = response.data['access']
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token)
+
+    def getDetailPostUrl(self, pk):
+        return reverse('post-detail', kwargs={'pk': pk})
+
+    def setUp(self):
+        self.user1 = User.objects.create_user(username='testuser', openID = 'testopenid')
+        self.user2 = User.objects.create_user(username='testuser2', openID = 'testopenid2')
+        self.user3 = User.objects.create_user(username='testuser3', openID = 'testopenid3')
+        self.user4 = User.objects.create_user(username='testuser4', openID = 'testopenid4')
+
+        # 创建帖子
+        self.post1 = Post.objects.create(title='Test Post', content='Test Content', author=self.user1)
+        self.post2 = Post.objects.create(title='Test Post2', content='Test Content2', author=self.user2)
+        self.post3 = Post.objects.create(title='Test Post3', content='Test Content3', author=self.user3)
+        self.post4 = Post.objects.create(title='Test Post4', content='Test Content4', author=self.user4)
+
+        # 设置 URL
+        self.create_url = reverse('post-list')
+        self.detail_url = reverse('post-detail', kwargs={'pk': self.post1.pk})
+
+        
+        self.follow(self.user1, self.user2)
+        self.follow(self.user1, self.user3)
+        self.follow(self.user2, self.user1)
+        self.follow(self.user2, self.user3)
+        self.follow(self.user3, self.user4)
+        
+
+    def test_following_in_post(self):
+        self.mylogin(self.user1)
+        response = self.client.get(self.create_url)
+        print(response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data[0]['is_following'], False)
+        self.assertEqual(response.data[1]['is_following'], True)
+        self.assertEqual(response.data[2]['is_following'], True)
+        self.assertEqual(response.data[3]['is_following'], False)

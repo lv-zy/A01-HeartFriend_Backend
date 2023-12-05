@@ -18,14 +18,20 @@ class PostSerializer(serializers.ModelSerializer):
 
     comments_count = serializers.SerializerMethodField()
 
+    is_following = serializers.SerializerMethodField()
+
     class Meta:
         model = Post
         fields = ['id', 'title', 'content', 'author', 'created_at', 'updated_at', 
                   'likes_count', 'is_liked', 'dislikes_count', 'is_disliked', 'comments_count', 
-                  'author_uuid']
+                  'author_uuid',
+                  'is_following'
+                  ]
         read_only_fields = ['id', 'author', 'created_at', 'updated_at', 
                             'likes_count', 'is_liked', 'comments_count', 'dislikes_count', 'is_disliked', 
-                            'author_uuid']
+                            'author_uuid',
+                            'is_following'
+                            ]
     
     def get_likes_count(self, obj):
         # 返回点赞的总数
@@ -53,6 +59,12 @@ class PostSerializer(serializers.ModelSerializer):
     
     def get_author_uuid(self, obj):
         return obj.author.uuid
+    
+    def get_is_following(self, obj):
+        request = self.context.get("request")
+        if request and hasattr(request, "user"):
+            return request.user.is_following(obj.author)
+        return False
 
 
 class CommentSerializer(serializers.ModelSerializer):

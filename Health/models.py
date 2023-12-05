@@ -1,10 +1,12 @@
+from datetime import date
 from django.db import models
-from Authentication.models import User
+from django.contrib.auth import get_user_model
 
-
+User = get_user_model()
 
 class Medicine(models.Model):
     name = models.CharField(max_length=80, unique=True)
+    note = models.CharField(max_length=2048, default='')
     amount = models.CharField(max_length=256)
     select_time = models.CharField(max_length=1024)
     unit = models.CharField(max_length=64, default='单位')

@@ -1,7 +1,7 @@
 from django.db import models
-from Authentication.models import User
+from django.contrib.auth import get_user_model
 
-
+User = get_user_model()
 
 class Diary(models.Model):
     title = models.CharField(max_length=80, unique=True)

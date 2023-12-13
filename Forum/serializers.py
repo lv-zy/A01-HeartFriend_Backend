@@ -20,18 +20,26 @@ class PostSerializer(serializers.ModelSerializer):
 
     is_following = serializers.SerializerMethodField()
 
+    is_my_post = serializers.SerializerMethodField()
+
     class Meta:
         model = Post
+        # can add: "title", "content", "images"
         fields = ['id', 'title', 'content', 'author', 'created_at', 'updated_at', 
                   'likes_count', 'is_liked', 'dislikes_count', 'is_disliked', 'comments_count', 
                   'author_uuid',
                   'is_following',
-                  'images'
+                  'images',
+                  'allowed_comment',
+                  'is_my_post',
+                  'visibility',
                   ]
         read_only_fields = ['id', 'author', 'created_at', 'updated_at', 
                             'likes_count', 'is_liked', 'comments_count', 'dislikes_count', 'is_disliked', 
                             'author_uuid',
-                            'is_following'
+                            'is_following',
+                            'is_my_post',
+                            'visibility',
                             ]
     
     def get_likes_count(self, obj):
@@ -66,6 +74,11 @@ class PostSerializer(serializers.ModelSerializer):
         if request and hasattr(request, "user"):
             return request.user.is_following(obj.author)
         return False
+    
+    def get_is_my_post(self, obj):
+        request = self.context.get("request")
+        return obj.author == request.user
+
 
 
 class CommentSerializer(serializers.ModelSerializer):

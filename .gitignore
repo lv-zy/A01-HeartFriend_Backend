@@ -1,3 +1,11 @@
+# migrations files 
+*.migrations/
+
+# static 
+static/
+
+
+
 # Django #
 *.log
 *.pot

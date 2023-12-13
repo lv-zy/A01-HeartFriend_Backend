@@ -19,10 +19,21 @@ class UserSerializer(serializers.ModelSerializer):
     self_intro = serializers.CharField(max_length=256, allow_blank=True, required=False)
     
     avatar_url = serializers.ImageField(use_url=True, read_only=True)
+    following_count = serializers.SerializerMethodField()
+    followers_count = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['username', 'gender', 'avatar_url', 'self_intro', 'age']
+        fields = ['username', 'gender', 'avatar_url', 'self_intro', 'age', 'uuid', 
+                  'following_count', 'followers_count']
+        read_only_fields = ('uuid', 'following_count', 'followers_count')
+
+    def get_following_count(self, obj):
+        return obj.following.count()
+    
+    def get_followers_count(self, obj):
+        return obj.followers.count()
+
 
     def validate_username(self, value):
         """
@@ -31,9 +42,6 @@ class UserSerializer(serializers.ModelSerializer):
         if len(value) > 80:
             raise serializers.ValidationError("The username is too long.")
 
-        # # 检查用户名是否已经存在
-        # if User.objects.filter(username=value).exists():
-        #     raise serializers.ValidationError("A user with that username already exists.")
         return value
 
     def validate_age(self, value):
@@ -65,3 +73,33 @@ class AvatarUploadSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['avatar_url']
+
+
+
+class UserQuerySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('uuid', 'username', 'gender', 'self_intro', 'age', 'avatar_url')
+        read_only_fields = ('uuid', 'username', 'gender', 'self_intro', 'age', 'avatar_url')
+
+
+
+# 有关关注者和被关注者的序列化器
+class UserBasicInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['uuid', 'username', 'avatar_url', 'self_intro']
+
+class FollowersSerializer(serializers.ModelSerializer):
+    followers = UserBasicInfoSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['followers']
+
+class FollowingSerializer(serializers.ModelSerializer):
+    following = UserBasicInfoSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['following']

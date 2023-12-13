@@ -109,4 +109,6 @@ docker-compose.yml
 requirements.txt 
 Dockerfile 
 nginx
-settings_prod.py 
+settings_prod.py
+
+

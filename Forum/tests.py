@@ -391,7 +391,7 @@ class PostFollowingTests(APITestCase):
 
 
 
-class DeleteCommentAPITests(APITestCase):
+class PermissionCommentAPITests(APITestCase):
     def mylogin(self, user):
 
         self.user_data = {'username': user.username, 'code': user.openID}
@@ -567,6 +567,96 @@ class DeleteCommentAPITests(APITestCase):
 
 
 
+
+
+
+
+class PermissionCommentAPITests(APITestCase):
+    def mylogin(self, user):
+
+        self.user_data = {'username': user.username, 'code': user.openID}
+        response = self.client.post('/api/v1/user/login/', self.user_data, format='json')
+        self.token = response.data['access']
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token)
+
+    def getDetailPostUrl(self, pk):
+        return reverse('post-detail', kwargs={'pk': pk})
+
+    def setUp(self):
+        # 创建用户
+        self.settings(DEBUG=True)
+        self.user = User.objects.create_user(username='testuser', openID = 'testopenid')
+        self.user2 = User.objects.create_user(username='testuser2', openID = 'testopenid2')
+        self.user3 = User.objects.create_user(username='testuser3', openID = 'testopenid3')
+        self.user4 = User.objects.create_user(username='testuser4', openID = 'testopenid4')
+
+        # 创建帖子
+        self.post1 = Post.objects.create(title='Test Post1', content='Test Content1', author=self.user)
+        self.post1_2 = Post.objects.create(title='Test Post1', content='Test Content1', author=self.user)
+        self.post1_3 = Post.objects.create(title='Test Post1', content='Test Content1', author=self.user)
+        self.post2 = Post.objects.create(title='Test Post2', content='Test Content2', author=self.user2)
+        self.post2_2 = Post.objects.create(title='Test Post2_2', content='Test Content2', author=self.user2)
+        self.post2_3 = Post.objects.create(title='Test Post2_2', content='Test Content2', author=self.user2)
+        self.post2_4 = Post.objects.create(title='Test Post2_2', content='Test Content2', author=self.user2)
+        self.post3 = Post.objects.create(title='Test Post3', content='Test Content3', author=self.user3)
+
+        # 创建评论
+        self.comment1 = Comment.objects.create(post=self.post1, content='Test Comment, after post1', author=self.user)
+        self.comment2_1 = Comment.objects.create(post=self.post2, content='Test Comment, after post2', author=self.user2)
+        self.comment2_2 = Comment.objects.create(post=self.post2, content='Test Comment2, after post2', author=self.user2)
+        self.comment2_3 = Comment.objects.create(post=self.post2, content='Test Comment3, after post2', author=self.user)
+        self.comment3 = Comment.objects.create(post=self.post3, content='Test Comment, after post3', author=self.user3)
+
+        self.comment_create_url = reverse('comment-list')
+
+    def test_get_postlist(self):
+
+        # 获取自己的帖子
+        self.mylogin(self.user)
+        myheader = {'uuid' : self.user.uuid}
+        response = self.client.get(reverse('post-getUserPosts'), myheader, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 3)
+        for each in response.data:
+            self.assertEqual(Post.objects.get(id=each['id']).author.username, self.user.username)
+
+        # 别人获取这个用户的帖子
+        self.mylogin(self.user2)
+        myheader = {'uuid' : self.user.uuid}
+        response = self.client.get(reverse('post-getUserPosts'), myheader, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 3)
+        for each in response.data:
+            self.assertEqual(Post.objects.get(id=each['id']).author.username, self.user.username)
+
+        
+
+        # 设置一些不可见的帖子
+        self.mylogin(self.user2)
+        data = {'visibility': 'PR'}
+        response = self.client.post(reverse('post-setVisibility', kwargs={'pk': self.post2_3.pk}), data, format='json')
+        self.assertEqual(response.status_code, 200)
+
+
+        # 别人获取这个用户的帖子
+        self.mylogin(self.user)
+        myheader = {'uuid' : self.user2.uuid}
+        response = self.client.get(reverse('post-getUserPosts'), myheader, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 3)
+        for each in response.data:
+            self.assertEqual(Post.objects.get(id=each['id']).author.username, self.user2.username)
+
+        # 获取自己的帖子
+        self.mylogin(self.user2)
+        myheader = {'uuid' : self.user2.uuid}
+        response = self.client.get(reverse('post-getUserPosts'), myheader, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 4)
+        for each in response.data:
+            self.assertEqual(Post.objects.get(id=each['id']).author.username, self.user2.username)
+
+        
 
 
 

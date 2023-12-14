@@ -88,6 +88,29 @@ class PostViewSet(viewsets.ModelViewSet):
         post.save()
         return Response({"visibility": visibility}, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=['get'])
+    def getUserPosts(self, request):
+        """
+        获取当前登录用户发的帖子
+        """
+        target_uuid = request.query_params.get('uuid', None)
+        if not target_uuid:
+            return Response({"message": "uuid argument not provided."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        target_user = User.objects.get(uuid = target_uuid)
+        if not target_user:
+            return Response({"message": "User does not exist."}, status=status.HTTP_404_NOT_FOUND)
+        
+        queryset = self.get_queryset().filter(author=target_user)
+
+        # 序列化数据
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
     
     
     def get_serializer_context(self):

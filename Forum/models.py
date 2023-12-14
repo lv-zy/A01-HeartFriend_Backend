@@ -5,6 +5,18 @@ from .utils import random_postpic_path
 
 User = get_user_model()
 
+class CommentStatus(models.TextChoices):
+    OPEN = 'OP', 'Open for comments'
+    CLOSED = 'CL', 'Closed for comments'
+    AUTHORONLY = 'AU', 'Only author can comment'
+
+
+class PostVisibility(models.TextChoices):
+    PUBLIC = 'PU', 'Public'
+    PRIVATE = 'PR', 'Private'
+    # FRIENDS_ONLY = 'FO', 'Friends Only'
+
+
 class Post(models.Model):
     title = models.CharField(max_length=200, verbose_name='标题')
     content = models.TextField(verbose_name='内容')
@@ -13,6 +25,16 @@ class Post(models.Model):
     updated_at = models.DateTimeField(default=timezone.now, verbose_name='更新时间')
     likes = models.ManyToManyField(User, related_name='liked_posts', blank=True, verbose_name='点赞用户')
     dislikes = models.ManyToManyField(User, related_name='disliked_posts', blank=True, verbose_name='踩帖用户')
+    allowed_comment = models.CharField(
+        max_length=2,
+        choices=CommentStatus.choices,
+        default=CommentStatus.OPEN
+    )
+    visibility = models.CharField(
+        max_length=2,
+        choices=PostVisibility.choices,
+        default=PostVisibility.PUBLIC,
+    )
 
     images = models.CharField(max_length=4096, default="")
 

@@ -659,6 +659,128 @@ class PermissionCommentAPITests(APITestCase):
         
 
 
+class PostPagination_And_FollowingPost_Tests(APITestCase):
+    def follow(self, user1, user2):
+        self.mylogin(user1)
+        response = self.client.post(reverse('follow-unfollow'), {'uuid': user2.uuid})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.client.credentials(HTTP_AUTHORIZATION = '')
+
+    def mylogin(self, user):
+        self.user_data = {'username': user.username, 'code': user.openID}
+        response = self.client.post('/api/v1/user/login/', self.user_data, format='json')
+        self.token = response.data['access']
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token)
+
+
+    def setUp(self):
+        self.user1 = User.objects.create_user(username='testuser', openID='testopenid')
+        self.user2 = User.objects.create_user(username='testuser2', openID='testopenid2')
+        self.user3 = User.objects.create_user(username='testuser3', openID='testopenid3')
+        self.user4 = User.objects.create_user(username='testuser4', openID='testopenid4')
+        self.create_url = reverse('post-list')
+        self.followingPost_url = reverse('post-getFollowingPosts')
+        self.mylogin(self.user1)
+        
+        # 创建一定数量的帖子以测试分页
+        self.user1_total_posts = 50
+        for i in range(self.user1_total_posts):
+            Post.objects.create(title=f'Test Post {i}', content=f'Test Content {i}', author=self.user1)
+        
+        self.user2_total_posts = 20
+        for i in range(self.user2_total_posts):
+            Post.objects.create(title=f'Test Post {i}', content=f'Test Content {i}', author=self.user2)
+
+        self.user3_total_posts = 41
+        for i in range(self.user3_total_posts):
+            Post.objects.create(title=f'Test Post {i}', content=f'Test Content {i}', author=self.user3)
+
+        self.user4_total_posts = 10
+        for i in range(self.user4_total_posts):
+            Post.objects.create(title=f'Test Post {i}', content=f'Test Content {i}', author=self.user4)
+
+
+    def test_pagination(self):
+        test_cases = [
+            {'limit': 5, 'offset': 0},
+            {'limit': 3, 'offset': 5},
+            {'limit': 4, 'offset': 10}
+        ]
+
+        for case in test_cases:
+            with self.subTest(case=case):
+                response = self.client.get(f'{self.create_url}?limit={case["limit"]}&offset={case["offset"]}')
+                self.assertEqual(response.status_code, status.HTTP_200_OK)
+                self.assertEqual(len(response.data), min(case["limit"], Post.objects.count() - case["offset"]))
+
+                # 检查返回的帖子是否按预期顺序
+                for i, post in enumerate(response.data):
+                    expected_post = Post.objects.all()[case['offset'] + i]
+                    self.assertEqual(post['title'], expected_post.title)
+                    self.assertEqual(post['content'], expected_post.content)
+
+    def test_pagination_without_parameters(self):
+        # 测试没有分页参数时的默认行为
+        response = self.client.get(self.create_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # 默认最多返回40条
+        self.assertEqual(len(response.data), min(Post.objects.count(), 40))
+
+    def test_pagination_with_invalid_parameters(self):
+        # 测试无效的分页参数
+        response = self.client.get(f'{self.create_url}?limit=-1&offset=0')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), min(Post.objects.count(), 40))
+
+        response = self.client.get(f'{self.create_url}?limit=5&offset=-1')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), min(Post.objects.count(), 5))
+
+
+        response = self.client.get(f'{self.create_url}?limit=-1&offset=5')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), min(Post.objects.count(), 40))
+        for i, post in enumerate(response.data):
+            expected_post = Post.objects.all()[5 + i]
+            self.assertEqual(post['title'], expected_post.title)
+            self.assertEqual(post['content'], expected_post.content)
+
+    def test_get_myfollowing_posts(self):
+        # User3 关注 User2
+        self.follow(self.user3, self.user2)
+        self.mylogin(self.user3)
+
+        # 获取 User3 关注的用户的帖子
+        response = self.client.get(f'{self.followingPost_url}?limit=40&offset=0')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # 验证返回的帖子数量是否正确
+        self.assertEqual(len(response.data), min(self.user2_total_posts, 40))
+
+        # 确保返回的所有帖子都是 User2 发的
+        for post in response.data:
+            self.assertEqual(post['author'], self.user2.username)
+
+        # User3 现在也关注 User1
+        self.follow(self.user3, self.user1)
+        self.mylogin(self.user3)
+        # 再次获取 User3 关注的用户的帖子
+        
+        myoffset = 0
+        while myoffset < self.user1_total_posts + self.user2_total_posts:
+            
+            response = self.client.get(f'{self.followingPost_url}?limit=40&offset={myoffset}')
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            # 现在返回的帖子应该是 User1 和 User2 的总和
+            expected_posts_count = min(self.user1_total_posts + self.user2_total_posts - myoffset, 40)
+            self.assertEqual(len(response.data), expected_posts_count)
+
+            # 验证返回的帖子是否都是 User1 或 User2 发的
+            for post in response.data:
+                self.assertIn(post['author'], [self.user1.username, self.user2.username])
+            
+            myoffset += 40
 
 
 

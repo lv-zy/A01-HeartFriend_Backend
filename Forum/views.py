@@ -13,9 +13,24 @@ from django.contrib.auth import get_user_model
 import os
 from uuid import uuid4
 from rest_framework.views import APIView
-
+from rest_framework.pagination import LimitOffsetPagination
 
 User = get_user_model()
+
+
+
+
+
+class MyLimitOffsetPagination(LimitOffsetPagination):
+    default_limit = 40   # default limit per age
+    limit_query_param = 'limit'  # default is limit
+    offset_query_param = 'offset'  # default param is offset
+    max_limit = 40 # max limit per age
+
+    def get_paginated_response(self, data):
+        return Response(
+            data
+        )
 
 class PostViewSet(viewsets.ModelViewSet):
     """
@@ -24,6 +39,7 @@ class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = MyLimitOffsetPagination
 
     @action(detail=True, methods=['post'])
     def like(self, request, pk=None):
@@ -112,6 +128,28 @@ class PostViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
     
+
+    @action(detail=False, methods=['get'])
+    def getFollowingPosts(self, request):
+        """
+        获取当前用户关注的人发的帖子
+        """
+        user = self.request.user
+        following_users = user.following.all()
+
+        # 获取这些用户的帖子
+        queryset = self.get_queryset().filter(author__in=following_users)
+
+        # 序列化数据
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    
     
     def get_serializer_context(self):
         context = super(PostViewSet, self).get_serializer_context()
@@ -154,7 +192,7 @@ class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
     permission_classes = [IsAuthenticated]
-
+    pagination_class = MyLimitOffsetPagination
 
     def create(self, request, *args, **kwargs):
         post_id = request.data.get('post_id')

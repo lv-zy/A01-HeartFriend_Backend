@@ -13,9 +13,25 @@ from django.contrib.auth import get_user_model
 import os
 from uuid import uuid4
 from rest_framework.views import APIView
-
+from rest_framework.pagination import LimitOffsetPagination
+from django.db.models import Count, Max
 
 User = get_user_model()
+
+
+
+
+
+class MyLimitOffsetPagination(LimitOffsetPagination):
+    default_limit = 40   # default limit per age
+    limit_query_param = 'limit'  # default is limit
+    offset_query_param = 'offset'  # default param is offset
+    max_limit = 40 # max limit per age
+
+    def get_paginated_response(self, data):
+        return Response(
+            data
+        )
 
 class PostViewSet(viewsets.ModelViewSet):
     """
@@ -24,6 +40,7 @@ class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = MyLimitOffsetPagination
 
     @action(detail=True, methods=['post'])
     def like(self, request, pk=None):
@@ -91,7 +108,7 @@ class PostViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def getUserPosts(self, request):
         """
-        获取当前登录用户发的帖子
+        获取目标用户发的帖子
         """
         target_uuid = request.query_params.get('uuid', None)
         if not target_uuid:
@@ -110,6 +127,80 @@ class PostViewSet(viewsets.ModelViewSet):
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+
+    @action(detail=False, methods=['get'])
+    def getFollowingPosts(self, request):
+        """
+        获取当前用户关注的人发的帖子
+        """
+        user = self.request.user
+        following_users = user.following.all()
+
+        # 获取这些用户的帖子
+        queryset = self.get_queryset().filter(author__in=following_users)
+
+        # 序列化数据
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def getLikedPosts(self, request):
+        """
+        获取目标用户赞过的帖子
+        """
+        try:
+            target_uuid = request.query_params.get('uuid', None)
+            if not target_uuid:
+                return Response({"message": "uuid argument not provided."}, status=status.HTTP_400_BAD_REQUEST)
+            
+            target_user = User.objects.get(uuid = target_uuid)
+            if not target_user:
+                return Response({"message": "User does not exist."}, status=status.HTTP_404_NOT_FOUND)
+        except:
+            return Response({"message": "uuid invalid."}, status=status.HTTP_404_NOT_FOUND)
+        
+        liked_posts = self.get_queryset().filter(likes=target_user)
+
+        page = self.paginate_queryset(liked_posts)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(liked_posts, many=True)
+        return Response(serializer.data)
+
+
+    @action(detail=False, methods=['get'])
+    def getDislikedPosts(self, request):
+        """
+        获取当前用户踩过的帖子
+        """
+        try:
+            target_uuid = request.query_params.get('uuid', None)
+            if not target_uuid:
+                return Response({"message": "uuid argument not provided."}, status=status.HTTP_400_BAD_REQUEST)
+            
+            target_user = User.objects.get(uuid = target_uuid)
+            if not target_user:
+                return Response({"message": "User does not exist."}, status=status.HTTP_404_NOT_FOUND)
+        except:
+            return Response({"message": "uuid invalid."}, status=status.HTTP_404_NOT_FOUND)
+        
+        liked_posts = self.get_queryset().filter(dislikes=target_user)
+
+        page = self.paginate_queryset(liked_posts)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(liked_posts, many=True)
         return Response(serializer.data)
     
     
@@ -138,11 +229,27 @@ class PostViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         queryset = Post.objects.all()
-
+        
+        # 筛选可见范围的帖子
         public_posts = queryset.filter(visibility='PU')
         own_posts = queryset.filter(author=user)
         queryset = public_posts | own_posts
-        # queryset = public_posts
+
+        sort_by = self.request.query_params.get('sort_by')
+        if not sort_by:
+            return queryset.distinct()
+
+        if sort_by == 'created_at':
+            queryset = queryset.order_by('-created_at')
+        elif sort_by == 'updated_at':
+            queryset = queryset.order_by('-updated_at')
+        elif sort_by == 'likes':
+            queryset = queryset.annotate(likes_count=Count('likes')).order_by('-likes_count')
+        elif sort_by == 'comments':
+            queryset = queryset.annotate(comments_count=Count('comments')).order_by('-comments_count')
+        else:
+            queryset = queryset.order_by('-updated_at')
+
 
         return queryset.distinct()
     
@@ -154,7 +261,7 @@ class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
     permission_classes = [IsAuthenticated]
-
+    pagination_class = MyLimitOffsetPagination
 
     def create(self, request, *args, **kwargs):
         post_id = request.data.get('post_id')

@@ -85,10 +85,10 @@ class PostAPITests(APITestCase):
         self.mylogin(self.user)
         response = self.client.get(self.create_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 4)
+        self.assertEqual(len(response.data['data']), 4)
         
         # 验证返回的数据
-        post_response = response.data[1]
+        post_response = response.data['data'][1]
         self.assertEqual(post_response['title'], self.post2.title)
         self.assertEqual(post_response['content'], self.post2.content)
         self.assertEqual(post_response['author'], self.post2.author.username)
@@ -157,19 +157,19 @@ class CommentAPITests(APITestCase):
         self.myheader = {'post_id' : self.post.pk}
         response = self.client.get(self.comment_create_url, self.myheader, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]['content'], self.comment.content)
+        self.assertEqual(len(response.data['data']), 1)
+        self.assertEqual(response.data['data'][0]['content'], self.comment.content)
 
         # 无指定post_id，返回全集
         response = self.client.get(self.comment_create_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 4)
+        self.assertEqual(len(response.data['data']), 4)
 
         # post_id不存在，返回空集
         self.myheader = {'post_id' : -1}
         response = self.client.get(self.comment_create_url, self.myheader, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 0)
+        self.assertEqual(len(response.data['data']), 0)
 
     def test_create_comments(self):
         self.mylogin(self.user2)
@@ -183,8 +183,8 @@ class CommentAPITests(APITestCase):
         self.myheader = {'post_id' : self.post.pk}
         response = self.client.get(self.comment_create_url, self.myheader, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
-        self.assertEqual(response.data[1]['content'], "New Comment")
+        self.assertEqual(len(response.data['data']), 2)
+        self.assertEqual(response.data['data'][1]['content'], "New Comment")
     
 
     def test_comment_creation_unauthenticated(self):
@@ -336,7 +336,7 @@ class UUIDAPITests(APITestCase):
         self.mylogin(self.user)
         response = self.client.get(self.create_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data[0]['author_uuid'], self.user.uuid)
+        self.assertEqual(response.data['data'][0]['author_uuid'], self.user.uuid)
 
 
 
@@ -384,10 +384,10 @@ class PostFollowingTests(APITestCase):
         self.mylogin(self.user1)
         response = self.client.get(self.create_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data[0]['is_following'], False)
-        self.assertEqual(response.data[1]['is_following'], True)
-        self.assertEqual(response.data[2]['is_following'], True)
-        self.assertEqual(response.data[3]['is_following'], False)
+        self.assertEqual(response.data['data'][0]['is_following'], False)
+        self.assertEqual(response.data['data'][1]['is_following'], True)
+        self.assertEqual(response.data['data'][2]['is_following'], True)
+        self.assertEqual(response.data['data'][3]['is_following'], False)
 
 
 
@@ -616,8 +616,8 @@ class PermissionCommentAPITests(APITestCase):
         myheader = {'uuid' : self.user.uuid}
         response = self.client.get(reverse('post-getUserPosts'), myheader, format='json')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 3)
-        for each in response.data:
+        self.assertEqual(len(response.data['data']), 3)
+        for each in response.data['data']:
             self.assertEqual(Post.objects.get(id=each['id']).author.username, self.user.username)
 
         # 别人获取这个用户的帖子
@@ -625,8 +625,8 @@ class PermissionCommentAPITests(APITestCase):
         myheader = {'uuid' : self.user.uuid}
         response = self.client.get(reverse('post-getUserPosts'), myheader, format='json')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 3)
-        for each in response.data:
+        self.assertEqual(len(response.data['data']), 3)
+        for each in response.data['data']:
             self.assertEqual(Post.objects.get(id=each['id']).author.username, self.user.username)
 
         
@@ -643,8 +643,8 @@ class PermissionCommentAPITests(APITestCase):
         myheader = {'uuid' : self.user2.uuid}
         response = self.client.get(reverse('post-getUserPosts'), myheader, format='json')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 3)
-        for each in response.data:
+        self.assertEqual(len(response.data['data']), 3)
+        for each in response.data['data']:
             self.assertEqual(Post.objects.get(id=each['id']).author.username, self.user2.username)
 
         # 获取自己的帖子
@@ -652,8 +652,8 @@ class PermissionCommentAPITests(APITestCase):
         myheader = {'uuid' : self.user2.uuid}
         response = self.client.get(reverse('post-getUserPosts'), myheader, format='json')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 4)
-        for each in response.data:
+        self.assertEqual(len(response.data['data']), 4)
+        for each in response.data['data']:
             self.assertEqual(Post.objects.get(id=each['id']).author.username, self.user2.username)
 
         
@@ -711,10 +711,10 @@ class PostPagination_And_FollowingPost_Tests(APITestCase):
             with self.subTest(case=case):
                 response = self.client.get(f'{self.create_url}?limit={case["limit"]}&offset={case["offset"]}')
                 self.assertEqual(response.status_code, status.HTTP_200_OK)
-                self.assertEqual(len(response.data), min(case["limit"], Post.objects.count() - case["offset"]))
+                self.assertEqual(len(response.data['data']), min(case["limit"], Post.objects.count() - case["offset"]))
 
                 # 检查返回的帖子是否按预期顺序
-                for i, post in enumerate(response.data):
+                for i, post in enumerate(response.data['data']):
                     expected_post = Post.objects.all()[case['offset'] + i]
                     self.assertEqual(post['title'], expected_post.title)
                     self.assertEqual(post['content'], expected_post.content)
@@ -724,23 +724,23 @@ class PostPagination_And_FollowingPost_Tests(APITestCase):
         response = self.client.get(self.create_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # 默认最多返回40条
-        self.assertEqual(len(response.data), min(Post.objects.count(), 40))
+        self.assertEqual(len(response.data['data']), min(Post.objects.count(), 40))
 
     def test_pagination_with_invalid_parameters(self):
         # 测试无效的分页参数
         response = self.client.get(f'{self.create_url}?limit=-1&offset=0')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), min(Post.objects.count(), 40))
+        self.assertEqual(len(response.data['data']), min(Post.objects.count(), 40))
 
         response = self.client.get(f'{self.create_url}?limit=5&offset=-1')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), min(Post.objects.count(), 5))
+        self.assertEqual(len(response.data['data']), min(Post.objects.count(), 5))
 
 
         response = self.client.get(f'{self.create_url}?limit=-1&offset=5')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), min(Post.objects.count(), 40))
-        for i, post in enumerate(response.data):
+        self.assertEqual(len(response.data['data']), min(Post.objects.count(), 40))
+        for i, post in enumerate(response.data['data']):
             expected_post = Post.objects.all()[5 + i]
             self.assertEqual(post['title'], expected_post.title)
             self.assertEqual(post['content'], expected_post.content)
@@ -755,10 +755,10 @@ class PostPagination_And_FollowingPost_Tests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # 验证返回的帖子数量是否正确
-        self.assertEqual(len(response.data), min(self.user2_total_posts, 40))
+        self.assertEqual(len(response.data['data']), min(self.user2_total_posts, 40))
 
         # 确保返回的所有帖子都是 User2 发的
-        for post in response.data:
+        for post in response.data['data']:
             self.assertEqual(post['author'], self.user2.username)
 
         # User3 现在也关注 User1
@@ -774,10 +774,10 @@ class PostPagination_And_FollowingPost_Tests(APITestCase):
 
             # 现在返回的帖子应该是 User1 和 User2 的总和
             expected_posts_count = min(self.user1_total_posts + self.user2_total_posts - myoffset, 40)
-            self.assertEqual(len(response.data), expected_posts_count)
+            self.assertEqual(len(response.data['data']), expected_posts_count)
 
             # 验证返回的帖子是否都是 User1 或 User2 发的
-            for post in response.data:
+            for post in response.data['data']:
                 self.assertIn(post['author'], [self.user1.username, self.user2.username])
             
             myoffset += 40
@@ -833,7 +833,7 @@ class PostSortingTests(APITestCase):
         # 按创建时间降序排序帖子
         expected_order = sorted(self.posts, key=lambda x: x.created_at, reverse=True)
         for i in range(len(expected_order)):
-            self.assertEqual(response.data[i]['id'], expected_order[i].id)
+            self.assertEqual(response.data['data'][i]['id'], expected_order[i].id)
 
 
     def test_sort_by_updated_at(self):
@@ -841,14 +841,14 @@ class PostSortingTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         expected_order = sorted(self.posts, key=lambda x: x.updated_at, reverse=True)
         for i in range(len(expected_order)):
-            self.assertEqual(response.data[i]['id'], expected_order[i].id)
+            self.assertEqual(response.data['data'][i]['id'], expected_order[i].id)
 
     def test_sort_by_likes(self):
         response = self.client.get(f'{self.create_url}?sort_by=likes')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         expected_order = sorted(self.posts, key=lambda x: x.likes.count(), reverse=True)
         for i in range(len(expected_order)):
-            self.assertEqual(response.data[i]['id'], expected_order[i].id)
+            self.assertEqual(response.data['data'][i]['id'], expected_order[i].id)
 
 
     def test_sort_by_comments(self):
@@ -858,7 +858,7 @@ class PostSortingTests(APITestCase):
         # 按评论数降序排序帖子
         expected_order = sorted(self.posts, key=lambda x: x.comments.count(), reverse=True)
         for i in range(len(expected_order)):
-            self.assertEqual(response.data[i]['id'], expected_order[i].id)
+            self.assertEqual(response.data['data'][i]['id'], expected_order[i].id)
 
 
 
@@ -867,7 +867,7 @@ class PostSortingTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         expected_order = sorted(self.posts, key=lambda x: x.updated_at, reverse=True)
         for i in range(len(expected_order)):
-            self.assertEqual(response.data[i]['id'], expected_order[i].id)
+            self.assertEqual(response.data['data'][i]['id'], expected_order[i].id)
 
 
 
@@ -905,16 +905,16 @@ class PostLikesDislikesTests(APITestCase):
     def test_get_liked_posts(self):
         response = self.client.get(self.liked_posts_url, {'uuid': self.user2.uuid})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
-        self.assertIn(self.posts[0].id, [p['id'] for p in response.data])
-        self.assertIn(self.posts[1].id, [p['id'] for p in response.data])
+        self.assertEqual(len(response.data['data']), 2)
+        self.assertIn(self.posts[0].id, [p['id'] for p in response.data['data']])
+        self.assertIn(self.posts[1].id, [p['id'] for p in response.data['data']])
 
     def test_get_disliked_posts(self):
         response = self.client.get(self.disliked_posts_url, {'uuid': self.user2.uuid})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
-        self.assertIn(self.posts[2].id, [p['id'] for p in response.data])
-        self.assertIn(self.posts[3].id, [p['id'] for p in response.data])
+        self.assertEqual(len(response.data['data']), 2)
+        self.assertIn(self.posts[2].id, [p['id'] for p in response.data['data']])
+        self.assertIn(self.posts[3].id, [p['id'] for p in response.data['data']])
 
     def test_user_not_exist(self):
         response = self.client.get(self.liked_posts_url, {'uuid': 'non-existing-uuid'})

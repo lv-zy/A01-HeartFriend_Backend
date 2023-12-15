@@ -29,10 +29,14 @@ class MyLimitOffsetPagination(LimitOffsetPagination):
     max_limit = 40 # max limit per age
 
     def get_paginated_response(self, data):
-        return Response(
-            data
-        )
-
+        return Response({
+            "count": self.count,  # 总条目数
+            "next": self.get_next_link(),  # 下一页的 URL
+            "previous": self.get_previous_link(),  # 上一页的 URL
+            "limit": self.limit,  # 当前页的条目数
+            "offset": self.offset,  # 当前页的偏移量
+            "data": data  # 当前页的数据
+        })
 class PostViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows posts to be viewed or edited.

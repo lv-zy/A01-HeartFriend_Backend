@@ -784,5 +784,149 @@ class PostPagination_And_FollowingPost_Tests(APITestCase):
 
 
 
+from django.utils import timezone
+import datetime
 
+class PostSortingTests(APITestCase):
+    def mylogin(self, user):
+        self.user_data = {'username': user.username, 'code': user.openID}
+        response = self.client.post('/api/v1/user/login/', self.user_data, format='json')
+        self.token = response.data['access']
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token)
+
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', openID='testopenid')
+        self.create_url = reverse('post-list')
+        self.mylogin(self.user)
+        
+
+        # 创建多个帖子以进行排序测试
+        self.posts = []
+        for i in range(10):
+            post = Post.objects.create(
+                title=f'Post {i}', 
+                content=f'Content {i}', 
+                author=self.user, 
+                created_at=timezone.now() - datetime.timedelta(days=i),
+                updated_at=timezone.now() - datetime.timedelta(days=i / 2)
+            )
+            self.posts.append(post)
+
+        # 为帖子添加赞和踩
+        self.user2 = User.objects.create_user(username='testuser2', openID='testopenid2')
+        for i, post in enumerate(self.posts):
+            if i % 2 == 0:
+                post.likes.add(self.user2)
+            else:
+                post.dislikes.add(self.user2)
+
+        for i, post in enumerate(self.posts):
+            for _ in range(i):
+                Comment.objects.create(post=post, content=f'Comment {i}', author=self.user)
+            
+
+    def test_sort_by_created_at(self):
+        response = self.client.get(f'{self.create_url}?sort_by=created_at')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # 按创建时间降序排序帖子
+        expected_order = sorted(self.posts, key=lambda x: x.created_at, reverse=True)
+        for i in range(len(expected_order)):
+            self.assertEqual(response.data[i]['id'], expected_order[i].id)
+
+
+    def test_sort_by_updated_at(self):
+        response = self.client.get(f'{self.create_url}?sort_by=updated_at')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        expected_order = sorted(self.posts, key=lambda x: x.updated_at, reverse=True)
+        for i in range(len(expected_order)):
+            self.assertEqual(response.data[i]['id'], expected_order[i].id)
+
+    def test_sort_by_likes(self):
+        response = self.client.get(f'{self.create_url}?sort_by=likes')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        expected_order = sorted(self.posts, key=lambda x: x.likes.count(), reverse=True)
+        for i in range(len(expected_order)):
+            self.assertEqual(response.data[i]['id'], expected_order[i].id)
+
+
+    def test_sort_by_comments(self):
+        response = self.client.get(f'{self.create_url}?sort_by=comments')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # 按评论数降序排序帖子
+        expected_order = sorted(self.posts, key=lambda x: x.comments.count(), reverse=True)
+        for i in range(len(expected_order)):
+            self.assertEqual(response.data[i]['id'], expected_order[i].id)
+
+
+
+    def test_sort_by_invalid_param(self):
+        response = self.client.get(f'{self.create_url}?sort_by=invalid_param')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        expected_order = sorted(self.posts, key=lambda x: x.updated_at, reverse=True)
+        for i in range(len(expected_order)):
+            self.assertEqual(response.data[i]['id'], expected_order[i].id)
+
+
+
+
+class PostLikesDislikesTests(APITestCase):
+    def mylogin(self, user):
+        self.user_data = {'username': user.username, 'code': user.openID}
+        response = self.client.post('/api/v1/user/login/', self.user_data, format='json')
+        self.token = response.data['access']
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token)
+
+    def setUp(self):
+        self.user1 = User.objects.create_user(username='user1', openID='openID1')
+        self.user2 = User.objects.create_user(username='user2', openID='openID2')
+        self.user3 = User.objects.create_user(username='user3', openID='openID3')
+
+        self.posts = [
+            Post.objects.create(title=f'Post {i}', content=f'Content {i}', author=self.user1)
+            for i in range(5)
+        ]
+
+        # User2 likes some posts
+        self.posts[0].likes.add(self.user2)
+        self.posts[1].likes.add(self.user2)
+
+        # User2 dislikes some posts
+        self.posts[2].dislikes.add(self.user2)
+        self.posts[3].dislikes.add(self.user2)
+
+        self.liked_posts_url = reverse('post-getLikedPosts')
+        self.disliked_posts_url = reverse('post-getDislikedPosts')
+
+        self.mylogin(self.user1)
+
+    def test_get_liked_posts(self):
+        response = self.client.get(self.liked_posts_url, {'uuid': self.user2.uuid})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        self.assertIn(self.posts[0].id, [p['id'] for p in response.data])
+        self.assertIn(self.posts[1].id, [p['id'] for p in response.data])
+
+    def test_get_disliked_posts(self):
+        response = self.client.get(self.disliked_posts_url, {'uuid': self.user2.uuid})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        self.assertIn(self.posts[2].id, [p['id'] for p in response.data])
+        self.assertIn(self.posts[3].id, [p['id'] for p in response.data])
+
+    def test_user_not_exist(self):
+        response = self.client.get(self.liked_posts_url, {'uuid': 'non-existing-uuid'})
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        response = self.client.get(self.disliked_posts_url, {'uuid': 'non-existing-uuid'})
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_uuid_not_provided(self):
+        response = self.client.get(self.liked_posts_url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        response = self.client.get(self.disliked_posts_url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 

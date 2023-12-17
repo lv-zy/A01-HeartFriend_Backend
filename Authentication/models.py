@@ -57,6 +57,9 @@ class User(AbstractBaseUser, PermissionsMixin):
                                        symmetrical=False,
                                        blank=True)
 
+    is_forum_admin = models.BooleanField(default=False)
+
+
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)  # Required for admin interface

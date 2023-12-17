@@ -29,10 +29,14 @@ class MyLimitOffsetPagination(LimitOffsetPagination):
     max_limit = 40 # max limit per age
 
     def get_paginated_response(self, data):
-        return Response(
-            data
-        )
-
+        return Response({
+            "count": self.count,  # 总条目数
+            "next": self.get_next_link(),  # 下一页的 URL
+            "previous": self.get_previous_link(),  # 上一页的 URL
+            "limit": self.limit,  # 当前页的条目数
+            "offset": self.offset,  # 当前页的偏移量
+            "data": data  # 当前页的数据
+        })
 class PostViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows posts to be viewed or edited.
@@ -214,7 +218,7 @@ class PostViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         post = self.get_object()
-        if post.author != request.user:
+        if post.author != request.user and request.user.is_forum_admin == False:
             return Response({'message': 'You can only delete your own posts.'}, status=status.HTTP_403_FORBIDDEN)
         return super(PostViewSet, self).destroy(request, *args, **kwargs)
 
@@ -300,6 +304,8 @@ class CommentViewSet(viewsets.ModelViewSet):
         if request.user == comment.author:
             return super(CommentViewSet, self).destroy(request, *args, **kwargs)
         elif request.user == comment.post.author:
+            return super(CommentViewSet, self).destroy(request, *args, **kwargs)
+        elif request.user.is_forum_admin:
             return super(CommentViewSet, self).destroy(request, *args, **kwargs)
 
         return Response({'message': 'You can only delete your own comments.'}, status=status.HTTP_403_FORBIDDEN)

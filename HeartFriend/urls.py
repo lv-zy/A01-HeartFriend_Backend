@@ -27,7 +27,8 @@ urlpatterns = [
     path('api/v1/user/', include('Authentication.urls')),
     path('api/v1/diary/', include('Diary.urls')), 
     path('api/v1/forum/', include('Forum.urls')), 
-    path('api/v1/medicine/', include('Health.urls')), 
+    path('api/v1/medicine/', include('Health.urls')),
+    path('api/v1/chat/', include('Chat.urls')),  
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 

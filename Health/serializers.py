@@ -17,12 +17,3 @@ class MedicineSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('id', 'patient', 'create_time')
 
-class UserMedicineSerializer(serializers.ModelSerializer): 
-    medicine_list = serializers.SerializerMethodField()
-    class Meta: 
-        model = User
-        fields = '__all__'
-    def get_medicine_list(self, user):
-        user_medicine_list = Medicine.objects.filter(patient=self.context['request'].user)
-        serializer = MedicineSerializer(user_medicine_list, many=True)
-        return serializer.data

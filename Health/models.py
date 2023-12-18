@@ -12,6 +12,7 @@ class Medicine(models.Model):
     unit = models.CharField(max_length=64, default='单位')
     start_date = models.DateField()
     finish_date = models.DateField()
+    next_pick_date = models.DateField()
     create_time = models.DateTimeField(auto_now_add=True)
 
     patient = models.ForeignKey(User, on_delete=models.CASCADE)

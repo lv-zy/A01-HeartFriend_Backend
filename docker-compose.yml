@@ -25,7 +25,8 @@ services:
       - DJANGO_SETTINGS_MODULE=HeartFriend.settings_prod
     command: > 
       bash -c 
-      "python3 manage.py migrate --settings=HeartFriend.settings_prod && 
+      "python3 manage.py makemigrations && 
+      python3 manage.py migrate --settings=HeartFriend.settings_prod && 
       gunicorn -w4 -b 0.0.0.0:8000 --log-level=debug HeartFriend.wsgi &&
       python3 manage.py runserver 0.0.0.0:8000"  
     volumes:

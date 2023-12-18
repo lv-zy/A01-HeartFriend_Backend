@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework import generics, permissions
-from .serializers import MedicineSerializer, UserMedicineSerializer
+from .serializers import MedicineSerializer
 from .models import Medicine
 from .permissions import OwnerOnlyPermission
 

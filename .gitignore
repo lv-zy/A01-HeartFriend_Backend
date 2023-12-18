@@ -1,5 +1,5 @@
 # migrations files 
-*.migrations/
+*/migrations/
 
 # static 
 static/

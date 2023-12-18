@@ -6,3 +6,4 @@ mysqlclient==2.0.3
 python-decouple
 requests
 Pillow==10.1.0
+zhipuai

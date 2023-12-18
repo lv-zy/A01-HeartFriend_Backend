@@ -114,4 +114,17 @@ class ReportUpdateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
+from django.conf import settings
+from rest_framework.decorators import api_view, permission_classes
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def test_get_forum_admin(request):
+    if settings.DEBUG:
+        user = request.user
+        user.is_forum_admin = not user.is_forum_admin  # 切换管理员状态
+        user.save()  # 保存到数据库
 
+        status_message = 'Now you are a forum admin' if user.is_forum_admin else 'Now you are not a forum admin'
+        return Response(status_message)
+    else:
+        return Response('This is not a debug environment')

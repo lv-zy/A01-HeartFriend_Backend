@@ -19,16 +19,6 @@ class DiarySerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('id', 'author', 'create_time')
 
-class UserDiarySerializer(serializers.ModelSerializer): 
-    diary_list = serializers.SerializerMethodField()
-    class Meta: 
-        model = User
-        fields = '__all__'
-    def get_diary_list(self, user):
-        user_diary_list = Diary.objects.filter(author=self.context['request'].user)
-        serializer = DiarySerializer(user_diary_list, many=True)
-        return serializer.data
-    
 class ImageUploadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Image

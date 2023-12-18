@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import generics, permissions
 from rest_framework import status
 from rest_framework.views import APIView
-from .serializers import DiarySerializer, UserDiarySerializer, ImageUploadSerializer
+from .serializers import DiarySerializer,  ImageUploadSerializer
 from .models import Diary
 from .permissions import OwnerOnlyPermission
 from django.conf import settings

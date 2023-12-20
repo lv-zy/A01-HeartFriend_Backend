@@ -15,7 +15,6 @@ class ReportSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
     
     def create(self, validated_data):
-        # 不显示reporter字段
         report = Report.objects.create(**validated_data, reporter=self.context['request'].user)
         return report
     

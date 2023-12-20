@@ -206,8 +206,65 @@ class ReportTest(BaseAPITestCase):
                 self.assertEqual(report_data['report_status'], 'pending')
         
 
+    def test_create_null_post_report(self):
+        self.mylogin(self.users[0])
+
+        # 提交举报
+        data = {'post': None, 'report_type': 'spam', 'details': 'test'}
+        response = self.client.post(reverse('report'), data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        data = {'report_type': 'spam', 'details': 'test'}
+        response = self.client.post(reverse('report'), data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        data = {'post': "wrong param",'report_type': 'spam', 'details': 'test'}
+        response = self.client.post(reverse('report'), data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
+    def test_reportExists_after_post_deletion(self):
+        self.mylogin(self.admin)
+
+        # 创建一个新帖子和新举报
+        new_post = Post.objects.create(title='New Post for Report', content='Content', author=self.users[0])
+        new_report = Report.objects.create(post=new_post, reporter=self.users[1], report_type='spam', details='Spam report')
+
+        # 确保新举报已经被创建
+        self.assertTrue(Report.objects.filter(id=new_report.id).exists())
+
+        # 删除相关帖子
+        response = self.client.delete(self.getDetailPostUrl(new_post.id))
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # 检查帖子是否被删除
+        self.assertFalse(Post.objects.filter(id=new_post.id).exists())
+
+        # 验证举报依然存在
+        self.assertTrue(Report.objects.filter(id=new_report.id).exists())
+
     
+    def test_get_detail_report(self):
+        self.mylogin(self.users[0])
+
+        # 创建一个新举报
+        new_post = Post.objects.create(title='New Post for Report', content='Content', author=self.users[0])
+        new_report = Report.objects.create(post=new_post, reporter=self.users[0], report_type='spam', details='Spam report')
+
+        # 用户0尝试获取自己的举报信息
+        response = self.client.get(reverse('single_report', kwargs={'pk': new_report.id}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['id'], new_report.id)
+
+        # 用户1尝试获取用户0的举报信息
+        self.mylogin(self.users[1])
+        response = self.client.get(reverse('single_report', kwargs={'pk': new_report.id}))
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # 管理员尝试获取任何用户的举报信息
+        self.mylogin(self.admin)
+        response = self.client.get(reverse('single_report', kwargs={'pk': new_report.id}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['id'], new_report.id)
 
 
 
@@ -309,33 +366,32 @@ class AdminDeletePostCommentTest(BaseAPITestCase):
         response = self.client.delete(self.getDetailPostUrl(self.posts[0].id))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    
     def test_delete_comment(self):
+        # 用户0尝试删除不属于自己的评论，应返回403
         self.mylogin(self.users[0])
-
-        # 用户0删除用户1的评论并且不是自己的帖子，应该返回403
-        self.assertNotEqual(self.id, self.comments[51].id)
-        self.assertNotEqual(self.comments[51].post.author, self.users[0])
-        response = self.client.delete(self.getDetailCommentUrl(self.comments[51].id))
+        other_user_comment = next(c for c in self.comments if c.author != self.users[0] and c.post.author != self.users[0])
+        response = self.client.delete(self.getDetailCommentUrl(other_user_comment.id))
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-        # 用户0删除自己的评论，应该返回204
-        self.assertNotEqual(self.id, self.comments[0].id)
-        response = self.client.delete(self.getDetailCommentUrl(self.comments[0].id))
+        # 用户0删除自己的评论，应返回204
+        own_comment = next(c for c in self.comments if c.author == self.users[0])
+        response = self.client.delete(self.getDetailCommentUrl(own_comment.id))
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-        # 用户0删除自己的评论，应该返回404
-        response = self.client.delete(self.getDetailCommentUrl(self.comments[0].id))
+        # 用户0尝试再次删除同一个评论，应返回404
+        response = self.client.delete(self.getDetailCommentUrl(own_comment.id))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-
-        # 管理员删除用户1的评论，应该返回204
+        # 管理员尝试删除其他用户的评论，应返回204
         self.mylogin(self.admin)
-        self.assertNotEqual(self.id, self.comments[10].id)
-        response = self.client.delete(self.getDetailCommentUrl(self.comments[10].id))
+        another_user_comment = next(c for c in self.comments if c.author != self.admin)
+        response = self.client.delete(self.getDetailCommentUrl(another_user_comment.id))
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-
-        # 管理员删除不存在的评论，应该返回404
-        response = self.client.delete(self.getDetailCommentUrl(self.comments[0].id))
+        # 管理员尝试删除一个不存在的评论，应返回404
+        non_existing_comment_id = 99999  # 假设的不存在的评论ID
+        response = self.client.delete(self.getDetailCommentUrl(non_existing_comment_id))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+  

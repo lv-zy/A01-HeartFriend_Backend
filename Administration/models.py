@@ -22,12 +22,23 @@ class Report(models.Model):
 )
 
 
-    post = models.ForeignKey('Forum.Post', on_delete=models.CASCADE, related_name='reports')
+    post = models.ForeignKey(
+        'Forum.Post',
+        on_delete=models.SET_NULL,
+        related_name='reports',
+        null=True,  
+        blank=True
+    )
     report_type = models.CharField(max_length=50, choices=REPORT_TYPES)
     details = models.TextField()
-
     created_at = models.DateTimeField(auto_now_add=True)
-    reporter = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reports')
+    reporter = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name='reports',
+        null=True,
+        blank=True
+    )
 
 
     resolution_details = models.TextField(blank=True)

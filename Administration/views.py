@@ -9,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from .permissions import IsForumAdmin
 from rest_framework.pagination import LimitOffsetPagination
 from django.utils import timezone
+from Forum.models import Post
 
 class MyLimitOffsetPagination(LimitOffsetPagination):
     default_limit = 40   
@@ -34,10 +35,24 @@ class ReportCreateView(APIView):
     
 
     def post(self, request, format=None):
+        post_id = request.data.get('post')
+
+        # 验证 post_id 是否存在且有效
+        if post_id is None:
+            return Response({"detail": "Post ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            post_id = int(post_id)
+            post = Post.objects.get(pk=post_id)
+        except (ValueError, TypeError):
+            return Response({"detail": "Invalid post ID"}, status=status.HTTP_400_BAD_REQUEST)
+        except Post.DoesNotExist:
+            return Response({"detail": "Post not found"}, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = ReportSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(post=post) 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
@@ -113,6 +128,28 @@ class ReportUpdateView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+
+
+
+class SingleReportView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk, format=None):
+        try:
+            report = Report.objects.get(pk=pk)
+        except Report.DoesNotExist:
+            return Response({'message': 'Report not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # 如果用户是管理员，或者举报由该用户创建，则返回举报信息
+        if request.user.is_forum_admin or report.reporter == request.user:
+            serializer = ReportSerializer(report)
+            return Response(serializer.data)
+        else:
+            return Response({'message': 'You do not have permission to access this report'}, status=status.HTTP_403_FORBIDDEN)
+        
+
+        
+
 
 from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes

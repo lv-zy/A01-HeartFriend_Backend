@@ -4,7 +4,8 @@
 # static 
 static/
 
-
+# macos 
+*/.DS_Store
 
 # Django #
 *.log

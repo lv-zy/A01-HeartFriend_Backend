@@ -142,7 +142,7 @@ class SingleReportView(APIView):
 
         # 如果用户是管理员，或者举报由该用户创建，则返回举报信息
         if request.user.is_forum_admin or report.reporter == request.user:
-            serializer = ReportSerializer(report)
+            serializer = UserReportSerializer(report)
             return Response(serializer.data)
         else:
             return Response({'message': 'You do not have permission to access this report'}, status=status.HTTP_403_FORBIDDEN)

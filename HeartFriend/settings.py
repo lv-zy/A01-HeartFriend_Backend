@@ -182,12 +182,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
 
-# mail settings : 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' 
-EMAIL_HOST = 'smtp.163.com' 
-EMAIL_HOST_USER = 'heartfriend2023@163.com' 
-EMAIL_HOST_PASSWORD = 'SEQVPNJXOLUMBTIX'
-EMAIL_PORT = 25 
 
 
 # celery settings : 

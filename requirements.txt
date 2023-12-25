@@ -7,3 +7,7 @@ python-decouple
 requests
 Pillow==10.1.0
 zhipuai
+celery
+django-celery-beat
+django-celery-results
+Redis

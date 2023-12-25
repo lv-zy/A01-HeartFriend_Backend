@@ -4,7 +4,8 @@
 # static 
 static/
 
-
+# macos 
+*/.DS_Store
 
 # Django #
 *.log
@@ -119,4 +120,5 @@ Dockerfile
 nginx
 settings_prod.py
 
-
+# doc 
+*.md

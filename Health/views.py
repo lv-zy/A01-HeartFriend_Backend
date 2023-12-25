@@ -5,8 +5,10 @@ from rest_framework.response import Response
 from .serializers import MedicineSerializer
 from .models import Medicine
 from .permissions import OwnerOnlyPermission
+from rest_framework.permissions import AllowAny
 from django.contrib.auth import get_user_model
 import requests
+import json
 
 User = get_user_model() 
 
@@ -47,14 +49,14 @@ class Qrcode(APIView):
         else: 
             return Response({'error': 'bad request'}, status=response_qrcode.status_code)
         
-class QrcodeCallback(APIView): 
-
+class QrcodeCallback(APIView):
+    permission_classes = [AllowAny]
     def post(self, request): 
-        print("GET CALL BACK") 
-        post_data = request.POST 
-        try: 
-            request_uuid = post_data.get('data')["extra"]
-            request_uid = post_data.get('data')["uid"]
+        print("GET CALL BACK")
+        post_data = json.loads(request.body) 
+        print("JSON DATA : ", post_data)
+        try:
+
             subscriber = User.objects.filter(uuid=request_uuid)
             if subscriber is not None:
                 subscriber.uid = request_uid

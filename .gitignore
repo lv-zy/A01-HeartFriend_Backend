@@ -120,4 +120,5 @@ Dockerfile
 nginx
 settings_prod.py
 
-
+# doc 
+*.md

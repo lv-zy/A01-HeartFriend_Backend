@@ -8,8 +8,8 @@ User = get_user_model()
 @shared_task
 def send_mail_task():
     print("Mail sending.......")
-    subject = 'm1 and m2 demo'
-    message = f'Now I am testing m1 and m2 demo. there are {counter.objects.get(name="m1").amount} m1 and {counter.objects.get(name="m2").amount} m2' 
+    subject = 'dev-emailSender'
+    message = User.objects.all()  
     email_from = settings.EMAIL_HOST_USER
     recipient_list = ['incredible749@163.com', ]
     send_mail( subject, message, email_from, recipient_list )

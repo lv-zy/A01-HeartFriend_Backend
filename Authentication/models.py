@@ -39,7 +39,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     session_key = models.CharField(max_length=80, unique=True, null=True)
     create_time = models.IntegerField(default=int(timezone.now().timestamp()))
-
+    uid = models.CharField(max_length=128, unique=True, null=True)
 
 
     username = models.CharField(max_length=80, null=True, blank=True)

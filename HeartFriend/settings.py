@@ -180,3 +180,25 @@ LOGGING = {
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
+
+
+# mail settings : 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' 
+EMAIL_HOST = 'smtp.163.com' 
+EMAIL_HOST_USER = 'heartfriend2023@163.com' 
+EMAIL_HOST_PASSWORD = 'SEQVPNJXOLUMBTIX'
+EMAIL_PORT = 25 
+
+
+# celery settings : 
+CELERY_BROKER_URL = 'redis://redis:6379' 
+CELERY_ACCEPT_CONTENT = ['application/json'] 
+CELERY_RESULT_SERIALIZER = 'json' 
+CELERY_TASK_SERIALIZER = 'json' 
+CELERY_TIMEZONE = 'Asia/Shanghai' 
+
+# tasks status 
+CELERY_RESULT_BACKEND = 'django-db' 
+
+# celery beat setting 
+CELERY_BEAT_SCHEDULED = 'django_celery_beat.schedulers:DatabaseScheduler' 

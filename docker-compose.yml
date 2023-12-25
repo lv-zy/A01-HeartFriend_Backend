@@ -5,6 +5,8 @@ services:
     container_name: redis
     ports:
       - "6380:6379" 
+    networks: 
+      - app_network
   mysql:
     image: mysql:8.1
     container_name: mysql 
@@ -64,6 +66,8 @@ services:
     depends_on:
       - app
       - redis 
+    networks: 
+      - app_network
   beat:
     container_name: beat
     build: . 
@@ -72,12 +76,15 @@ services:
     volumes:
       - .:/HeartFriend
     environment:
+      - DEBUG=1
       - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1]
       - CELERY_BROKER=redis://redis:6379/0
       - CELERY_BACKEND=redis://redis:6379/0 
     depends_on:
       - app
-      - redis 
+      - redis
+    networks: 
+      - app_network  
   nginx:
     restart: always
     image: nginx:latest

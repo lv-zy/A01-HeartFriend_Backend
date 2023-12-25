@@ -1,8 +1,9 @@
 from celery import shared_task
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.mail import send_mail
 import requests
-import datetime
+from datetime import datetime
 
 User = get_user_model() 
 send_message_url = "https://wxpusher.zjiecode.com/api/send/message"
@@ -41,3 +42,13 @@ def send_message_task():
             pass
     
     return "Message sent..."
+
+@shared_task
+def send_email_task(): 
+    print("Mail sending.......")
+    subject = 'm1 and m2 demo'
+    message = f'I suppose ' 
+    email_from = settings.EMAIL_HOST_USER
+    recipient_list = ['incredible749@163.com', ]
+    send_mail( subject, message, email_from, recipient_list )
+    return "Mail has been sent........"

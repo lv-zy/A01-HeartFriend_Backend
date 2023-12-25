@@ -4,6 +4,11 @@ A01 小组
 
 --- 
 
+## 小组api说明文档
+
+https://silent-knife-070.notion.site/api-91ad35712bfe414c92ffb6bbd9dbc937
+
+里面提供了后端开发的所有api，供前端查阅。
 ## 文件目录简介 
 - meetings/
   - 此文件夹为会议记录存放文件夹，存放所有会议记录文件

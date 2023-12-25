@@ -17,9 +17,9 @@ app.conf.update(timezone='Asia/Shanghai')
 # Load task modules from all registered Django apps.
 # Celery Beat tasks registration
 app.conf.beat_schedule = {
-    'Send_mail_to_Client': {
-    'task': 'Health.tasks.send_mail_task',
-    'schedule': 30.0, 
+    'Send_message_to_Client': {
+    'task': 'Health.tasks.send_message_task',
+    'schedule': 60.0, 
     }
 }
 

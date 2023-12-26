@@ -22,6 +22,8 @@ class PostSerializer(serializers.ModelSerializer):
 
     is_my_post = serializers.SerializerMethodField()
 
+    author_avatar = serializers.SerializerMethodField()
+
     class Meta:
         model = Post
         # can add: "title", "content", "images"
@@ -33,6 +35,7 @@ class PostSerializer(serializers.ModelSerializer):
                   'allowed_comment',
                   'is_my_post',
                   'visibility',
+                  'author_avatar'
                   ]
         read_only_fields = ['id', 'author', 'created_at', 'updated_at', 
                             'likes_count', 'is_liked', 'comments_count', 'dislikes_count', 'is_disliked', 
@@ -40,6 +43,7 @@ class PostSerializer(serializers.ModelSerializer):
                             'is_following',
                             'is_my_post',
                             'visibility',
+                            'author_avatar',
                             ]
     
     def get_likes_count(self, obj):
@@ -68,6 +72,12 @@ class PostSerializer(serializers.ModelSerializer):
     
     def get_author_uuid(self, obj):
         return obj.author.uuid
+    
+    def get_author_avatar(self, obj):
+        if obj.author.avatar_url:
+            return obj.author.avatar_url.url
+        else:
+            return None
     
     def get_is_following(self, obj):
         request = self.context.get("request")

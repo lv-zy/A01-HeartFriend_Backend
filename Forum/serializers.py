@@ -94,14 +94,22 @@ class PostSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     author = serializers.ReadOnlyField(source='author.username')
     author_uuid = serializers.ReadOnlyField(source='author.uuid')
+    
+    author_avatar = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
-        fields = ['id', 'post', 'content', 'author', 'created_at', 'author_uuid']
-        read_only_fields = ['id', 'post', 'author', 'created_at', 'author_uuid']
+        fields = ['id', 'post', 'content', 'author', 'created_at', 'author_uuid', 'author_avatar']
+        read_only_fields = ['id', 'post', 'author', 'created_at', 'author_uuid', 'author_avatar']
 
     def get_author_uuid(self, obj):
         return obj.author.uuid
+    
+    def get_author_avatar(self, obj):
+        if obj.author.avatar_url:
+            return obj.author.avatar_url.url
+        else:
+            return None
 
 
 

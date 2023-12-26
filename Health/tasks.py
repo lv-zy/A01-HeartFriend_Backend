@@ -3,7 +3,10 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
+import pytz 
+
+Beijing_time = pytz.timezone('Asia/Shanghai')
 
 User = get_user_model() 
 send_message_url = "https://wxpusher.zjiecode.com/api/send/message"
@@ -14,18 +17,33 @@ app_token = "AT_6HJxIZU3rx6eDm5l2zrta6IsnqoDpZZO"
 def send_message_task():
     print("loop all users and sending messages...") 
     all_users = User.objects.all() 
-    today = datetime.now().date().strftime("%Y-%m-%d")
+    time_point = datetime.now(Beijing_time)
+    today = datetime.now(Beijing_time).date().strftime("%Y-%m-%d")
     for user in all_users: 
         if user.uid is not None: 
             content = "您好！亲爱的" + user.username + ": \n"
-            content += "今天是 " + today + ", "
+            content += "今天是 " + time_point.strftime("%Y年%m月%d日 %H:%M")
             content += "您有如下的药物: \n\n"
-            all_medicine = user.medicine_set.filter(start_date__lte=today, finish_date__gte=today)  
+            all_medicine = user.medicine_set.filter(start_date__lte=today, finish_date__gte=today)
+            if all_medicine is None: 
+                return f"No match medicine for user {user.username}, return..."  
+            medicine_content = "---- ---- ---- ----\n"
             for medicine in all_medicine:
-                content += "药物：" + medicine.name + " \n"
-                content += "服用时间: " + medicine.select_time + " \n"
-                content += "服用计量: " + medicine.amount + " " + medicine.unit + " \n"
-                content += "\n"
+                medicine_time_list = medicine.select_time.split(',') if medicine else []
+                if medicine_time_list is []:
+                    continue 
+                for medicine_time in medicine_time_list: 
+                    medicine_time_obj = datetime.strptime(medicine_time, "%H:%M").time() 
+                    combined_time = datetime.combine(datetime.now(Beijing_time).date(), medicine_time_obj) 
+                    time_difference = Beijing_time.localize(combined_time) - time_point
+                    if 0 <= time_difference.total_seconds() <= timedelta(minutes=10).total_seconds():
+                        medicine_content += "药物：" + medicine.name + " \n"
+                        medicine_content += "服用时间: " + medicine_time_obj.strftime("%H:%M") + " \n"
+                        medicine_content += "服用剂量: " + medicine.amount + " " + medicine.unit + " \n"
+            if medicine_content == "---- ---- ---- ----\n": 
+                return f"No match medicine time form user {user.username}"
+            content += medicine_content
+            content += "---- ---- ---- ----\n"
             content += "记得按时吃药哦～"
             print(user.username)
             print("user message content is ", content)  
@@ -39,18 +57,25 @@ def send_message_task():
             },headers={'Content-Type': 'application/json'})
             response_data = send_message_response.json()
             print(response_data)
-            pass 
+            return f"Message sent"
         else:
             print(user.username, "uid is none ")
-            pass
-    
+            return f"{user.username} has not opened the noticer function, ignoring..."
     return "Message sent..."
 
 @shared_task
 def send_email_task(): 
     print("Mail sending.......")
-    subject = 'm1 and m2 demo'
-    message = f'I suppose ' 
+    subject = 'HeartFriend Group Daily Log Info'
+    message = "Dear Developer: \n\n"
+    message += "---- ---- ---- ----\n"
+    message += "    DateTime : " + datetime.now(Beijing_time).strftime("%Y-%m-%d %H:%M") + "\n"
+    message += "    Registered user number : " + str(User.objects.count()) + "\n" 
+    message += "    Server's state : Normal\n"
+    message += "    Nice day! \n"
+    message += "\n\n" 
+    message += "                            HeartFriend Backend EmailSender..."
+
     email_from = settings.EMAIL_HOST_USER
     recipient_list = ['incredible749@163.com', ]
     send_mail( subject, message, email_from, recipient_list )

@@ -3,6 +3,7 @@ import os
 from celery import Celery
 from django.conf import settings
 from celery.schedules import crontab
+
 # Set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'HeartFriend.settings_prod')
 app = Celery('HeartFriend')
@@ -19,11 +20,11 @@ app.conf.update(timezone='Asia/Shanghai')
 app.conf.beat_schedule = {
     'Send_message_to_Client': {
     'task': 'Health.tasks.send_message_task',
-    'schedule': 30.0, 
+    'schedule': 60.0,
     }, 
     'Send_email_to_Client': { 
         'task': 'Health.tasks.send_email_task', 
-        'schedule': 600.0, 
+        'schedule': crontab(hour=1, minute=40), 
     }
 }
 

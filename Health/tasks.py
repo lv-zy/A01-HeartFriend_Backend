@@ -35,8 +35,7 @@ def send_message_task():
                 "uids": [user.uid], 
                 "verifyPay": False 
             },headers={'Content-Type': 'application/json'})
-            response_data = send_message_response.json() 
-            # TODO check sending status 
+            response_data = send_message_response.json()
             pass 
         else:
             pass

@@ -19,7 +19,7 @@ app.conf.update(timezone='Asia/Shanghai')
 app.conf.beat_schedule = {
     'Send_message_to_Client': {
     'task': 'Health.tasks.send_message_task',
-    'schedule': 60.0, 
+    'schedule': 30.0, 
     }, 
     'Send_email_to_Client': { 
         'task': 'Health.tasks.send_email_task', 

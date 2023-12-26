@@ -10,7 +10,7 @@ class Diary(models.Model):
     sleep_score = models.IntegerField(default=0)
     eat_score = models.IntegerField(default=0) 
     create_time = models.DateField(auto_now_add=True)
-    images = models.CharField(max_length=4096, default="")
+    images = models.CharField(max_length=4096, default="", null=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     
     def __str__(self):

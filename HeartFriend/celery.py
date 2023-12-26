@@ -23,7 +23,7 @@ app.conf.beat_schedule = {
     }, 
     'Send_email_to_Client': { 
         'task': 'Health.tasks.send_email_task', 
-        'schedule': 30.0, 
+        'schedule': 600.0, 
     }
 }
 

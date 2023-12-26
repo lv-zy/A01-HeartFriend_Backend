@@ -61,6 +61,7 @@ class QrcodeCallback(APIView):
             subscriber = User.objects.get(uuid=request_uuid)
             if subscriber is not None:
                 subscriber.uid = request_uid
+                subscriber.save() 
                 print(f"ok record user {subscriber.uuid},  uid is {subscriber.uid}")
                 return Response({'data': "received ok"}, status=200)
             else:

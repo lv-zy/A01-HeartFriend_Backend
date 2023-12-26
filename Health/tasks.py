@@ -14,7 +14,7 @@ app_token = "AT_6HJxIZU3rx6eDm5l2zrta6IsnqoDpZZO"
 def send_message_task():
     print("loop all users and sending messages...") 
     all_users = User.objects.all() 
-    today = datetime.now().date() 
+    today = datetime.now().date().strftime("%Y-%m-%d")
     for user in all_users: 
         if user.uid is not None: 
             content = "您好！亲爱的" + user.username + ": \n"
@@ -26,7 +26,9 @@ def send_message_task():
                 content += "服用时间: " + medicine.select_time + " \n"
                 content += "服用计量: " + medicine.amount + " " + medicine.unit + " \n"
                 content += "\n"
-            content += "记得按时吃药哦～" 
+            content += "记得按时吃药哦～"
+            print(user.username)
+            print("user message content is ", content)  
             send_message_response = requests.post(send_message_url, json={
                 "content": content, 
                 "appToken": app_token, 
@@ -36,8 +38,10 @@ def send_message_task():
                 "verifyPay": False 
             },headers={'Content-Type': 'application/json'})
             response_data = send_message_response.json()
+            print(response_data)
             pass 
         else:
+            print(user.username, "uid is none ")
             pass
     
     return "Message sent..."

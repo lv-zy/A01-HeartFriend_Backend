@@ -58,7 +58,7 @@ class QrcodeCallback(APIView):
         post_data = json.loads(request.body) 
         try:
             request_uuid = uuid.UUID(post_data["data"]["extra"])
-            request_uid = post_data["data"]["uid"] 
+            request_uid = post_data["data"]["uid"]
             subscriber = User.objects.filter(uuid=request_uuid)
             if subscriber is not None:
                 subscriber.uid = request_uid

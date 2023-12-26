@@ -10,8 +10,7 @@ from django.contrib.auth import get_user_model
 import requests
 import json
 import uuid
-
-User = get_user_model() 
+from Authentication.models import User
 
 qrcode_url = "https://wxpusher.zjiecode.com/api/fun/create/qrcode"
 old_app_Token = "AT_JgGxdzn8tcxvRyMsDTm33VoqAaNwLBY8"
@@ -59,14 +58,15 @@ class QrcodeCallback(APIView):
         try:
             request_uuid = uuid.UUID(post_data["data"]["extra"])
             request_uid = post_data["data"]["uid"]
-            subscriber = User.objects.filter(uuid=request_uuid)
+            subscriber = User.objects.get(uuid=request_uuid)
             if subscriber is not None:
                 subscriber.uid = request_uid
+                subscriber.save() 
                 print(f"ok record user {subscriber.uuid},  uid is {subscriber.uid}")
                 return Response({'data': "received ok"}, status=200)
             else:
                 print(f"unregisterd user") 
                 return Response({'error': "unregistered"}, status=500)
-        except:
-            print(f"no bad post data")
+        except Exception as e:
+            print(f"no bad post data {e}")
             return Response({'error':"bad data"}, status=500)

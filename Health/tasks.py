@@ -39,7 +39,7 @@ def send_message_task():
                     if 0 <= time_difference.total_seconds() <= timedelta(minutes=10).total_seconds():
                         medicine_content += "药物：" + medicine.name + " \n"
                         medicine_content += "服用时间: " + medicine_time_obj.strftime("%H:%M") + " \n"
-                        medicine_content += "服用剂量: " + medicine.amount + " " + medicine.unit + " \n"
+                        medicine_content += "服用剂量: " + medicine.amount + " " + medicine.unit + " \n\n"
             if medicine_content == "---- ---- ---- ----\n": 
                 return f"No match medicine time form user {user.username}"
             content += medicine_content
@@ -59,8 +59,8 @@ def send_message_task():
             print(response_data)
             return f"Message sent"
         else:
-            print(user.username, "uid is none ")
-            return f"{user.username} has not opened the noticer function, ignoring..."
+            print(user.username, "uid is none , continue for next user ...")
+            continue
     return "Message sent..."
 
 @shared_task

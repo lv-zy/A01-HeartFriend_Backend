@@ -24,7 +24,7 @@ app.conf.beat_schedule = {
     }, 
     'Send_email_to_Client': { 
         'task': 'Health.tasks.send_email_task', 
-        'schedule': crontab(hour=1, minute=40), 
+        'schedule': 600.0, 
     }
 }
 

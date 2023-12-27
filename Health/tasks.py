@@ -26,7 +26,8 @@ def send_message_task():
             content += "您有如下的药物: \n\n"
             all_medicine = user.medicine_set.filter(start_date__lte=today, finish_date__gte=today)
             if all_medicine is None: 
-                return f"No match medicine for user {user.username}, return..."  
+                print(f"No match medicine for user {user.username}, continue for next user...")
+                continue 
             medicine_content = "---- ---- ---- ----\n"
             for medicine in all_medicine:
                 medicine_time_list = medicine.select_time.split(',') if medicine else []
@@ -36,12 +37,13 @@ def send_message_task():
                     medicine_time_obj = datetime.strptime(medicine_time, "%H:%M").time() 
                     combined_time = datetime.combine(datetime.now(Beijing_time).date(), medicine_time_obj) 
                     time_difference = Beijing_time.localize(combined_time) - time_point
-                    if 0 <= time_difference.total_seconds() <= timedelta(minutes=10).total_seconds():
+                    if 0 <= time_difference.total_seconds() <= timedelta(minutes=3).total_seconds():
                         medicine_content += "药物：" + medicine.name + " \n"
                         medicine_content += "服用时间: " + medicine_time_obj.strftime("%H:%M") + " \n"
                         medicine_content += "服用剂量: " + medicine.amount + " " + medicine.unit + " \n\n"
             if medicine_content == "---- ---- ---- ----\n": 
-                return f"No match medicine time form user {user.username}"
+                print(f"No match medicine time form user {user.username}, continue for next user...")
+                continue
             content += medicine_content
             content += "---- ---- ---- ----\n"
             content += "记得按时吃药哦～"
@@ -57,7 +59,8 @@ def send_message_task():
             },headers={'Content-Type': 'application/json'})
             response_data = send_message_response.json()
             print(response_data)
-            return f"Message sent"
+            print(f"Message sent for user {user.username}, continue for next user") 
+            continue
         else:
             print(user.username, "uid is none , continue for next user ...")
             continue

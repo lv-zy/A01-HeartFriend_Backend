@@ -11,3 +11,4 @@ celery
 django-celery-beat
 django-celery-results
 Redis
+python-json-logger==2.0.7

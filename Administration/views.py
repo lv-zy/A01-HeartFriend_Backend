@@ -10,6 +10,8 @@ from .permissions import IsForumAdmin
 from rest_framework.pagination import LimitOffsetPagination
 from django.utils import timezone
 from Forum.models import Post
+from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import RefreshToken
 
 class MyLimitOffsetPagination(LimitOffsetPagination):
     default_limit = 40   
@@ -165,3 +167,30 @@ def test_get_forum_admin(request):
         return Response(status_message)
     else:
         return Response('This is not a debug environment')
+
+
+# for demo use only
+@api_view(['POST'])
+def admin_login(request):
+    openID = request.data.get('openID')
+    password = request.data.get('password')
+
+    if not openID or not password:
+        return Response({'error': 'Please provide both openID and password'}, status=400)
+    
+    
+    # 使用 Django 的 authenticate 方法
+    user = authenticate(openID=openID, password=password)
+
+    
+    if user is not None and user.is_forum_admin:  # 验证是否是管理员
+        try:
+            token = RefreshToken.for_user(user)
+            return Response({
+                'access': str(token.access_token),
+            }, status=200)
+        
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
+    else:
+        return Response({'error': 'Invalid Credentials or not Admin'}, status=400) 

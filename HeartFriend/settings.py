@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     'Diary',
     'Forum',
     'Health',
+    'django_celery_results', 
+    'django_celery_beat', 
 ]
 
 MIDDLEWARE = [
@@ -216,7 +218,6 @@ EMAIL_HOST_USER = 'heartfriend2023@163.com'
 EMAIL_HOST_PASSWORD = 'SEQVPNJXOLUMBTIX'
 EMAIL_PORT = 25 
 
-
 # celery settings : 
 CELERY_BROKER_URL = 'redis://redis:6379' 
 CELERY_ACCEPT_CONTENT = ['application/json'] 
@@ -225,7 +226,10 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Asia/Shanghai' 
 
 # tasks status 
-CELERY_RESULT_BACKEND = 'django-db' 
+CELERY_RESULT_BACKEND = 'django-db'
+# Optional: Set the number of worker processes
+CELERYD_CONCURRENCY = 4
+
 
 # celery beat setting 
 CELERY_BEAT_SCHEDULED = 'django_celery_beat.schedulers:DatabaseScheduler' 

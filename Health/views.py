@@ -9,12 +9,14 @@ from rest_framework.permissions import AllowAny
 from django.contrib.auth import get_user_model
 import requests
 import json
-
-User = get_user_model() 
+import uuid
+from Authentication.models import User
 
 qrcode_url = "https://wxpusher.zjiecode.com/api/fun/create/qrcode"
 old_app_Token = "AT_JgGxdzn8tcxvRyMsDTm33VoqAaNwLBY8"
 app_Token = "AT_6HJxIZU3rx6eDm5l2zrta6IsnqoDpZZO"
+
+
 class MedicineList(generics.ListCreateAPIView): 
     queryset = Medicine.objects.filter()
     serializer_class = MedicineSerializer
@@ -52,16 +54,19 @@ class Qrcode(APIView):
 class QrcodeCallback(APIView):
     permission_classes = [AllowAny]
     def post(self, request): 
-        print("GET CALL BACK")
         post_data = json.loads(request.body) 
-        print("JSON DATA : ", post_data)
         try:
-
-            subscriber = User.objects.filter(uuid=request_uuid)
+            request_uuid = uuid.UUID(post_data["data"]["extra"])
+            request_uid = post_data["data"]["uid"]
+            subscriber = User.objects.get(uuid=request_uuid)
             if subscriber is not None:
                 subscriber.uid = request_uid
-                print(f"ok record user {subscriber.username},  uid is {subscriber.uid}")
+                subscriber.save() 
+                print(f"ok record user {subscriber.uuid},  uid is {subscriber.uid}")
                 return Response({'data': "received ok"}, status=200)
-        except:
-            print(f"no bad post data")
+            else:
+                print(f"unregisterd user") 
+                return Response({'error': "unregistered"}, status=500)
+        except Exception as e:
+            print(f"no bad post data {e}")
             return Response({'error':"bad data"}, status=500)

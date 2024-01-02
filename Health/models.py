@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 class Medicine(models.Model):
-    name = models.CharField(max_length=80, unique=True)
+    name = models.CharField(max_length=80)
     note = models.CharField(max_length=2048, default='')
     amount = models.CharField(max_length=256)
     select_time = models.CharField(max_length=1024)

@@ -7,10 +7,13 @@ from .views import (
     ResolvedReportsView,
     ReportUpdateView,
     SingleReportView, 
-    test_get_forum_admin
+    test_get_forum_admin,
+    admin_login
 )
 
+
 urlpatterns = [
+    path('admin/login/', admin_login, name='admin-login'),
     path('reports/', ReportCreateView.as_view(), name='report'),
     path('reports/user/', UserReportsView.as_view(), name='user_reports'),
     path('reports/manage/all/', AllReportsView.as_view(), name='all_reports'),

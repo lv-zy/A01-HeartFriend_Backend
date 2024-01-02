@@ -16,12 +16,15 @@ from django.conf import settings
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions
 from .serializers import UserSerializer
+import logging
+import time
+from django.utils.timezone import now
 
 from . import models
 
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('myapp')
 
 
 
@@ -90,11 +93,12 @@ def get_WxUser_from_wechat(code):
     code2Session= "https://api.weixin.qq.com/sns/jscode2session?appid={}&secret={}&js_code={}&grant_type=authorization_code"
     response = requests.get(code2Session.format(settings.APPID, settings.APPSECRET, code))
     data = response.json()
-    logger.debug("wx api: " + str(data))
     if data.get("openid"):
         return data
     else:
         return False
+    
+
 
 
 
@@ -129,10 +133,25 @@ class UserDetailView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
         try:
+            start_time = time.time()
             uuid = request.query_params.get('uuid')
             user = User.objects.get(uuid=uuid)
+            get_user_time = time.time() - start_time
             serializer = UserQuerySerializer(user)
-            return Response(serializer.data)
+            tmp = Response(serializer.data)
+            serializer_time = time.time() - start_time - get_user_time
+            logger.info({
+                'message': 'Get user info performance',
+                'path': request.path,
+                'view': 'get_user_info',
+                'get_user_time': get_user_time,
+                'serializer_time': serializer_time, 
+                'timestamp': now().isoformat(),
+                'request_method': request.method,
+            })
+
+
+            return tmp
         except User.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 

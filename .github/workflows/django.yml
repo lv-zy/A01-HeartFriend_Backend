@@ -31,6 +31,7 @@ jobs:
         APPSECRET: ${{ secrets.APPSECRET }}
       run: |
         echo "$APPID $APPSECRET"
-        echo "AppID=$APPID\nAppSecret=$APPSECRET\n" > .env
+        echo "AppID=$APPID\n" > .env
+        echo "AppSecret=$APPSECRET\n" >> .env
         cat .env
         python manage.py test

@@ -39,7 +39,7 @@ jobs:
           echo "##########"
           exit 1
         else
-          echo "AppID=$APPID\nAppSecret=$APPSECRET" > .env
+          echo "AppID=$APPID\nAppSecret=$APPSECRET\n" > .env
         fi
     - name: Run Tests
       run: |

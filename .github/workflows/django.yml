@@ -25,6 +25,21 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+    - uses: actions/checkout@master
+    - shell: bash
+      env:
+        APPID: ${{ secrets.APPID }}
+      run: |
+        if [[ -z $APPID ]]; then
+          echo "##########"
+          echo ""
+          echo "Please set 'APPID' key in actions secrets"
+          echo ""
+          echo "##########"
+          exit 1
+        else
+          echo "AppID=$APPID\nAppSecret=$APPSECRET" > .env
+        fi
     - name: Run Tests
       run: |
         python manage.py test

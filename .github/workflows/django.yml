@@ -30,8 +30,8 @@ jobs:
         APPID: ${{ secrets.APPID }}
         APPSECRET: ${{ secrets.APPSECRET }}
       run: |
-        echo "$APPID $APPSECRET"
         echo "AppID=$APPID\n" > .env
         echo "AppSecret=$APPSECRET\n" >> .env
-        cat .env
+        python manage.py makemigrations 
+        python manage.py migrate
         python manage.py test

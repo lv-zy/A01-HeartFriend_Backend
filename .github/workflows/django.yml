@@ -29,9 +29,11 @@ jobs:
       env:
         APPID: ${{ secrets.APPID }}
         APPSECRET: ${{ secrets.APPSECRET }}
+        TEST: ${{ secrets.TEST }}
       run: |
         echo "AppID=$APPID\n" > .env
         echo "AppSecret=$APPSECRET\n" >> .env
+        echo "TEST=$TEST\n" >> .env
         python manage.py makemigrations 
         python manage.py migrate
         python manage.py test

@@ -29,6 +29,7 @@ jobs:
     - shell: bash
       env:
         APPID: ${{ secrets.APPID }}
+        APPSECRET: ${{ secrets.APPSECRET }}
       run: |
         if [[ -z $APPID ]]; then
           echo "##########"
